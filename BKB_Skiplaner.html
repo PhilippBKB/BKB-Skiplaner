@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BKB Skiplaner</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════
+   BASE
+════════════════════════════════════ */
+:root {
+  --mountain:#0d1b32; --deep:#071020; --mid:#1a3a6a;
+  --accent:#3b82f6; --accent2:#60a5fa;
+  --snow:#f0f6ff; --white:#ffffff;
+  --text:#1e293b; --muted:#64748b; --border:#e2e8f0;
+  --surface:#f8fafc; --success:#10b981;
+  --warning:#f59e0b; --danger:#ef4444;
+  --sidebar-w:220px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ════════════════════════════════════
+   LOGIN SCREEN
+════════════════════════════════════ */
+#login-screen {
+  position:fixed;inset:0;z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--mountain);overflow:hidden;
+}
+#login-screen.hidden{display:none;}
+
+.login-bg {position:absolute;inset:0;}
+.login-bg-gradient{position:absolute;inset:0;background:linear-gradient(160deg,#071020 0%,#0d1b32 40%,#1a3a6a 100%);}
+
+/* Mountain silhouettes */
+.mountain-layer{position:absolute;bottom:0;left:0;width:100%;}
+
+/* Stars */
+.stars{position:absolute;inset:0;}
+.star{position:absolute;width:2px;height:2px;background:white;border-radius:50%;animation:twinkle var(--dur,3s) ease-in-out infinite;animation-delay:var(--delay,0s);}
+@keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.9}}
+
+/* Snowflakes */
+.snowflakes{position:absolute;inset:0;pointer-events:none;}
+.flake{position:absolute;top:-20px;color:rgba(255,255,255,.55);font-size:var(--size,14px);animation:fall var(--speed,8s) linear infinite;animation-delay:var(--delay,0s);left:var(--left,50%);user-select:none;}
+@keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:0}10%{opacity:1}90%{opacity:.4}100%{transform:translateY(110vh) rotate(380deg);opacity:0}}
+
+/* Login card */
+.login-card-wrap{position:relative;z-index:10;width:100%;max-width:500px;padding:20px;animation:slideUp .7s cubic-bezier(.16,1,.3,1) both;max-height:calc(100vh - 40px);display:flex;flex-direction:column;}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.login-card{background:rgba(255,255,255,.97);border-radius:24px;border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column;overflow:hidden;max-height:100%;}
+.login-card-scroll{overflow-y:auto;flex:1;}
+
+.login-header{background:linear-gradient(135deg,#0d1b32 0%,#1a3a6a 100%);padding:30px 36px 26px;position:relative;overflow:hidden;}
+.login-header::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;background:rgba(255,255,255,.04);border-radius:50%;}
+.login-header::after{content:'';position:absolute;bottom:-70px;left:-30px;width:220px;height:220px;background:rgba(59,130,246,.08);border-radius:50%;}
+
+.login-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;position:relative;z-index:1;}
+.login-logo-icon{width:44px;height:44px;background:rgba(255,255,255,.12);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.2);}
+.login-logo-icon svg{width:24px;height:24px;fill:white;}
+.login-logo-name{font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:white;letter-spacing:-.3px;}
+.login-logo-sub{font-size:11px;color:rgba(255,255,255,.45);font-weight:300;margin-top:1px;}
+
+.login-title{font-family:'Sora',sans-serif;font-size:24px;font-weight:700;color:white;letter-spacing:-.4px;line-height:1.2;position:relative;z-index:1;}
+.login-sub{font-size:13px;color:rgba(255,255,255,.5);margin-top:5px;position:relative;z-index:1;}
+
+/* Tabs */
+.tab-row{display:flex;border-bottom:1px solid var(--border);background:white;}
+.tab-btn{flex:1;padding:14px;text-align:center;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* Shared form styles */
+.login-body{padding:28px 36px 32px;}
+.fgroup{margin-bottom:16px;}
+.flabel{display:block;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.finput,.fselect{width:100%;height:44px;border:1.5px solid var(--border);border-radius:11px;padding:0 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--surface);outline:none;appearance:none;transition:all .2s;}
+.finput:focus,.fselect:focus{border-color:var(--accent);background:white;box-shadow:0 0 0 4px rgba(59,130,246,.1);}
+.finput::placeholder{color:#b0bec5;}
+.frow2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.radio-group{display:flex;gap:8px;flex-wrap:wrap;}
+.rpill input{display:none;}
+.rpill label{display:flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);background:var(--surface);transition:all .2s;margin:0;}
+.rpill input:checked+label{border-color:var(--accent);background:#eff6ff;color:var(--accent);}
+.rpill label .dot{width:8px;height:8px;border-radius:50%;background:currentColor;opacity:.4;}
+.rpill input:checked+label .dot{opacity:1;}
+
+.level-group{display:flex;gap:6px;}
+.lpill input{display:none;}
+.lpill label{padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted);background:var(--surface);transition:all .2s;margin:0;}
+.lpill.anf input:checked+label{border-color:#10b981;background:#ecfdf5;color:#065f46;}
+.lpill.fort input:checked+label{border-color:#f59e0b;background:#fffbeb;color:#92400e;}
+.lpill.pro input:checked+label{border-color:#8b5cf6;background:#f5f3ff;color:#4c1d95;}
+
+.upload-area{border:2px dashed var(--border);border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);position:relative;}
+.upload-area:hover{border-color:var(--accent);background:#eff6ff;}
+.upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{width:34px;height:34px;margin:0 auto 7px;background:#e2e8f0;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.upload-icon svg{width:16px;height:16px;stroke:var(--muted);fill:none;}
+.upload-text{font-size:12px;color:var(--muted);}
+.upload-text strong{color:var(--accent);font-weight:500;}
+
+.divider-row{display:flex;align-items:center;gap:12px;margin:18px 0;}
+.div-line{flex:1;height:1px;background:var(--border);}
+.div-text{font-size:12px;color:#b0bec5;}
+
+.btn-submit{width:100%;height:48px;background:linear-gradient(135deg,#0d1b32 0%,#1a3a6a 100%);color:white;border:none;border-radius:13px;font-family:'Sora',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.2px;}
+.btn-submit:hover{opacity:.9;transform:translateY(-1px);}
+.btn-submit svg{width:17px;height:17px;}
+
+.err-msg{font-size:12px;color:var(--danger);margin-top:4px;display:none;}
+input.err{border-color:var(--danger)!important;}
+
+/* Success screen */
+.success-view{display:none;padding:48px 36px;text-align:center;}
+.success-icon{width:68px;height:68px;background:#ecfdf5;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;animation:popIn .4s cubic-bezier(.16,1,.3,1) both;}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+.success-icon svg{width:32px;height:32px;stroke:#10b981;fill:none;stroke-width:2.5;}
+.success-title{font-family:'Sora',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:7px;}
+.success-sub{font-size:13px;color:var(--muted);line-height:1.6;}
+.success-badge{display:inline-flex;align-items:center;gap:6px;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:500;margin-top:14px;cursor:pointer;transition:all .2s;}
+.success-badge:hover{background:#d1fae5;}
+
+.login-footer{text-align:center;margin-top:14px;font-size:11px;color:rgba(255,255,255,.35);}
+
+/* ════════════════════════════════════
+   APP SHELL
+════════════════════════════════════ */
+#app-shell{display:none;}
+#app-shell.visible{display:block;}
+
+/* Topbar */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;background:var(--mountain);display:flex;align-items:center;padding:0 24px;gap:16px;border-bottom:1px solid rgba(255,255,255,.07);}
+.topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.topbar-logo .icon{width:32px;height:32px;background:rgba(59,130,246,.25);border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(59,130,246,.4);}
+.topbar-logo .icon svg{width:18px;height:18px;fill:white;}
+.topbar-logo .logo-name{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;color:white;letter-spacing:-.3px;}
+.topbar-logo .logo-sub{font-size:10px;color:rgba(255,255,255,.38);font-weight:300;margin-left:2px;}
+.topbar-spacer{flex:1;}
+.topbar-user{display:flex;align-items:center;gap:10px;}
+.topbar-user .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white;border:2px solid rgba(255,255,255,.15);}
+.topbar-user .uname{font-size:13px;color:rgba(255,255,255,.75);}
+.logout-btn{font-size:12px;color:rgba(255,255,255,.4);cursor:pointer;padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.1);transition:all .2s;}
+.logout-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);}
+
+/* Sidebar */
+.sidebar{position:fixed;top:56px;left:0;bottom:0;width:var(--sidebar-w);background:white;border-right:1px solid var(--border);padding:14px 10px;overflow-y:auto;z-index:90;}
+.sidebar-section{font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:0 10px;margin:16px 0 6px;}
+.sidebar-section:first-child{margin-top:4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:400;color:var(--muted);transition:all .15s;text-decoration:none;user-select:none;}
+.nav-item:hover{background:var(--surface);color:var(--text);}
+.nav-item.active{background:#eff6ff;color:var(--accent);font-weight:500;}
+.nav-item .nicon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-item.active .nicon{background:#dbeafe;}
+.nav-item .nicon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.nbadge{margin-left:auto;background:var(--danger);color:white;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;}
+
+/* Main */
+.main{margin-left:var(--sidebar-w);margin-top:56px;padding:28px;min-height:calc(100vh - 56px);}
+.page{display:none;}
+.page.active{display:block;}
+.page-title{font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.4px;margin-bottom:4px;}
+.page-sub{font-size:14px;color:var(--muted);margin-bottom:22px;}
+
+/* Cards */
+.card{background:white;border-radius:16px;border:1px solid var(--border);padding:20px;}
+.card-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;}
+
+/* Grids */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+
+/* Stat cards */
+.stat-card{background:white;border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+.stat-label{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.stat-val{font-family:'Sora',sans-serif;font-size:28px;font-weight:700;color:var(--text);letter-spacing:-1px;}
+.stat-tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;margin-top:6px;font-weight:500;}
+.tag-green{background:#ecfdf5;color:#065f46;}
+.tag-red{background:#fef2f2;color:#991b1b;}
+.tag-blue{background:#eff6ff;color:#1d4ed8;}
+.tag-amber{background:#fffbeb;color:#92400e;}
+.tag-purple{background:#f3e8ff;color:#6b21a8;}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:var(--mountain);color:white;}
+.btn-primary:hover{background:#1a3a6a;}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--muted);}
+.btn-outline:hover{background:var(--surface);color:var(--text);}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+/* Pills */
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;}
+
+/* ─ DASHBOARD ─ */
+.dash-hero{background:linear-gradient(135deg,var(--mountain) 0%,#1a3a6a 100%);border-radius:20px;padding:28px 32px;margin-bottom:20px;position:relative;overflow:hidden;}
+.dash-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:240px;height:240px;background:rgba(59,130,246,.1);border-radius:50%;}
+.dash-hero-title{font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:white;letter-spacing:-.4px;margin-bottom:5px;position:relative;z-index:1;}
+.dash-hero-sub{font-size:13px;color:rgba(255,255,255,.5);position:relative;z-index:1;}
+.countdown-row{display:flex;gap:14px;margin-top:18px;position:relative;z-index:1;}
+.countdown-box{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:11px 18px;text-align:center;}
+.countdown-num{font-family:'Sora',sans-serif;font-size:24px;font-weight:700;color:white;}
+.countdown-lbl{font-size:10px;color:rgba(255,255,255,.45);}
+.activity-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.activity-item:last-child{border-bottom:none;}
+.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.activity-text{font-size:13px;color:var(--text);flex:1;}
+.activity-time{font-size:11px;color:var(--muted);}
+.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.progress-label{font-size:13px;color:var(--text);flex:1;}
+.progress-val{font-size:12px;color:var(--muted);min-width:34px;text-align:right;}
+.progress-bar{height:6px;background:var(--border);border-radius:4px;overflow:hidden;flex:2;}
+.progress-fill{height:100%;border-radius:4px;background:var(--accent);}
+
+/* ─ GRUPPEN ─ */
+.drag-pool{background:white;border:1px solid var(--border);border-radius:16px;padding:16px;height:fit-content;}
+.pool-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;}
+.person-chip{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:grab;transition:all .15s;user-select:none;}
+.person-chip:hover{border-color:var(--accent);background:#eff6ff;transform:translateX(2px);}
+.person-chip.dragging{opacity:.35;}
+.chip-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
+.chip-name{font-size:13px;font-weight:500;color:var(--text);}
+.chip-sub{font-size:11px;color:var(--muted);}
+.teacher-card{background:white;border:1px solid var(--border);border-radius:16px;padding:16px;}
+.teacher-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.teacher-avatar{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
+.teacher-name{font-size:15px;font-weight:600;color:var(--text);}
+.teacher-sub{font-size:12px;color:var(--muted);}
+.drop-zone{min-height:56px;border:2px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);transition:all .2s;margin-top:8px;padding:8px;}
+.drop-zone.over{border-color:var(--accent);background:#eff6ff;color:var(--accent);}
+.assigned-chip{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:5px;}
+.remove-btn{margin-left:auto;width:20px;height:20px;border-radius:50%;background:#fef2f2;color:var(--danger);display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:none;line-height:1;flex-shrink:0;transition:background .15s;}
+.remove-btn:hover{background:#fee2e2;}
+
+/* ─ ZIMMER ─ */
+.room-card{background:white;border:1px solid var(--border);border-radius:16px;padding:18px;transition:border-color .2s;}
+.room-card:hover{border-color:#93c5fd;}
+.room-num{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;color:var(--text);}
+.room-attrs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px;}
+.beds-row{display:flex;gap:4px;margin-bottom:10px;}
+.bed-icon{width:26px;height:18px;border-radius:4px;background:var(--border);}
+.bed-icon.taken{background:#3b82f6;}
+.occupant-name{font-size:12px;color:var(--text);padding:4px 0;border-bottom:1px solid var(--border);}
+.occupant-name:last-of-type{border-bottom:none;}
+
+/* ─ INFO ─ */
+.info-item{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);}
+.info-item:last-child{border-bottom:none;}
+.info-icon-box{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.info-icon-box svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;}
+.info-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px;}
+.info-meta{font-size:12px;color:var(--muted);}
+.doc-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.doc-item:hover{border-color:var(--accent);background:#eff6ff;}
+.doc-ext{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.doc-name{font-size:13px;font-weight:500;color:var(--text);}
+.doc-size{font-size:11px;color:var(--muted);}
+
+/* ─ ANMELDUNG ─ */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface);}
+td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafbfc;}
+.td-person{display:flex;align-items:center;gap:10px;}
+
+/* ─ CHAT ─ */
+.chat-layout{display:grid;grid-template-columns:220px 1fr;background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;height:calc(100vh - 152px);}
+.chat-sidebar{border-right:1px solid var(--border);padding:14px 10px;overflow-y:auto;}
+.chat-sidebar-title{font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding:0 8px;margin-bottom:8px;}
+.chat-channel{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;transition:all .15s;}
+.chat-channel:hover{background:var(--surface);}
+.chat-channel.active{background:#eff6ff;}
+.ch-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;}
+.ch-name{font-size:13px;font-weight:500;color:var(--text);}
+.ch-preview{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
+.chat-main{display:flex;flex-direction:column;}
+.chat-topbar{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.ch-title{font-size:14px;font-weight:600;color:var(--text);}
+.ch-count{font-size:12px;color:var(--muted);}
+.chat-messages{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px;}
+.msg-group{display:flex;gap:10px;}
+.msg-group.own{flex-direction:row-reverse;}
+.msg-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;align-self:flex-end;}
+.msg-content{max-width:65%;}
+.msg-sender{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.msg-group.own .msg-sender{text-align:right;}
+.msg-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:4px;}
+.msg-group.own .msg-bubble{background:#1a3a6a;color:white;border:none;border-bottom-right-radius:4px;border-bottom-left-radius:14px;}
+.msg-time{font-size:10px;color:var(--muted);margin-top:3px;}
+.msg-group.own .msg-time{text-align:right;}
+.chat-input-row{padding:13px 15px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;}
+.chat-input{flex:1;height:42px;border:1.5px solid var(--border);border-radius:12px;padding:0 14px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none;}
+.chat-input:focus{border-color:var(--accent);background:white;}
+.btn-send{width:42px;height:42px;border-radius:12px;background:var(--mountain);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0;}
+.btn-send:hover{background:#1a3a6a;}
+.btn-send svg{width:17px;height:17px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.date-divider{text-align:center;font-size:11px;color:var(--muted);position:relative;margin:4px 0;}
+.date-divider::before,.date-divider::after{content:'';position:absolute;top:50%;width:calc(50% - 54px);height:1px;background:var(--border);}
+.date-divider::before{left:0;}
+.date-divider::after{right:0;}
+
+/* ─ MODAL ─ */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(13,27,50,.55);align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:white;border-radius:20px;padding:28px;width:460px;max-width:90vw;animation:modalIn .25s cubic-bezier(.16,1,.3,1) both;}
+@keyframes modalIn{from{transform:scale(.95) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:20px;}
+.form-group{margin-bottom:16px;}
+.form-label{display:block;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.form-input,.form-select{width:100%;height:42px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--surface);outline:none;appearance:none;}
+.form-input:focus,.form-select:focus{border-color:var(--accent);background:white;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;}
+
+/* ─ PASSWORT REGELN ─ */
+.pw-rule{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);transition:color .2s;}
+.pw-rule.ok{color:#10b981;}
+.pw-rule.ok .rule-icon{stroke:#10b981;}
+.rule-icon{width:14px;height:14px;flex-shrink:0;stroke:var(--border);transition:stroke .2s;}
+.pw-rule.ok .rule-icon circle{display:none;}
+.pw-rule.ok .rule-icon::after{content:'';}
+
+/* ─ TOAST ─ */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:300;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--mountain);color:white;padding:12px 18px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:10px;animation:toastIn .3s cubic-bezier(.16,1,.3,1) both;border-left:3px solid var(--accent);max-width:300px;}
+@keyframes toastIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-bg">
+    <div class="login-bg-gradient"></div>
+    <!-- Mountain SVG -->
+    <svg class="mountain-layer" viewBox="0 0 1440 400" style="position:absolute;bottom:0;left:0;width:100%;opacity:.15;" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 400 L180 160 L340 270 L500 100 L680 290 L860 60 L1040 210 L1200 90 L1360 250 L1440 170 L1440 400Z" fill="white"/>
+      <path d="M0 400 L140 230 L290 310 L450 150 L620 330 L810 130 L970 270 L1130 150 L1290 290 L1440 210 L1440 400Z" fill="white" opacity=".45"/>
+    </svg>
+    <div class="stars" id="stars"></div>
+    <div class="snowflakes" id="snowflakes"></div>
+  </div>
+
+  <div class="login-card-wrap">
+    <div class="login-card">
+
+      <!-- Header -->
+      <div class="login-header">
+        <div class="login-logo-row">
+          <div class="login-logo-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2L8.5 8H4l3.5 3.5L6 18l6-2.5L18 18l-1.5-6.5L20 8h-4.5z"/></svg>
+          </div>
+          <div>
+            <div class="login-logo-name">BKB Skiplaner</div>
+            <div class="login-logo-sub">Klassenfahrt 2025 · Sölden, Österreich</div>
+          </div>
+        </div>
+        <div class="login-title" id="login-main-title">Willkommen zurück!</div>
+        <div class="login-sub" id="login-main-sub">Meld dich an und check deinen Ski-Status.</div>
+      </div>
+
+      <!-- Tabs (sticky, scrollt nicht mit) -->
+      <div class="tab-row">
+        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Anmelden</button>
+        <button class="tab-btn" id="tab-register" onclick="switchTab('register')">Registrieren</button>
+      </div>
+
+      <!-- Scrollbarer Bereich -->
+      <div class="login-card-scroll">
+
+      <!-- LOGIN FORM -->
+      <div id="view-login" class="login-body">
+        <div class="fgroup">
+          <label class="flabel" for="l-email">E-Mail</label>
+          <input class="finput" type="email" id="l-email" placeholder="deine@schule.de">
+          <div class="err-msg" id="err-l-email">Gültige E-Mail angeben</div>
+        </div>
+        <div class="fgroup">
+          <label class="flabel" for="l-pw">Passwort</label>
+          <input class="finput" type="password" id="l-pw" placeholder="Dein Passwort">
+          <div class="err-msg" id="err-l-pw">Passwort angeben</div>
+        </div>
+        <div style="text-align:right;margin-bottom:16px;">
+          <span style="font-size:12px;color:var(--accent);cursor:pointer;" onclick="showToastGlobal('Passwort-Reset wurde gesendet!')">Passwort vergessen?</span>
+        </div>
+        <button class="btn-submit" onclick="doLogin()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Einloggen
+        </button>
+        <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted);">
+          Noch kein Account? <span style="color:var(--accent);cursor:pointer;font-weight:500;" onclick="switchTab('register')">Jetzt registrieren</span>
+        </div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="view-register" style="display:none;" class="login-body">
+        <div class="frow2">
+          <div class="fgroup">
+            <label class="flabel" for="r-vn">Vorname</label>
+            <input class="finput" type="text" id="r-vn" placeholder="Anna">
+            <div class="err-msg" id="err-r-vn">Pflichtfeld</div>
+          </div>
+          <div class="fgroup">
+            <label class="flabel" for="r-nn">Nachname</label>
+            <input class="finput" type="text" id="r-nn" placeholder="Müller">
+            <div class="err-msg" id="err-r-nn">Pflichtfeld</div>
+          </div>
+        </div>
+        <div class="frow2">
+          <div class="fgroup">
+            <label class="flabel" for="r-email">E-Mail</label>
+            <input class="finput" type="email" id="r-email" placeholder="deine@schule.de">
+            <div class="err-msg" id="err-r-email">Gültige E-Mail</div>
+          </div>
+          <div class="fgroup">
+            <label class="flabel" for="r-klasse">Klasse</label>
+            <select class="fselect" id="r-klasse">
+              <option value="">Wählen</option>
+              <option>10A</option><option>10B</option><option>10C</option>
+              <option>11A</option><option>11B</option><option>11C</option>
+              <option>12A</option><option>12B</option>
+            </select>
+            <div class="err-msg" id="err-r-klasse">Pflichtfeld</div>
+          </div>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Sportart</label>
+          <div class="radio-group">
+            <div class="rpill"><input type="radio" name="r-sport" id="r-ski" value="Ski"><label for="r-ski"><span class="dot"></span> Ski</label></div>
+            <div class="rpill"><input type="radio" name="r-sport" id="r-snow" value="Snowboard"><label for="r-snow"><span class="dot"></span> Snowboard</label></div>
+          </div>
+          <div class="err-msg" id="err-r-sport">Bitte wählen</div>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Level</label>
+          <div class="level-group">
+            <div class="lpill anf"><input type="radio" name="r-level" id="r-anf" value="Anfänger"><label for="r-anf">Anfänger</label></div>
+            <div class="lpill fort"><input type="radio" name="r-level" id="r-fort" value="Fortgeschritten"><label for="r-fort">Fortgeschritten</label></div>
+            <div class="lpill pro"><input type="radio" name="r-level" id="r-pro" value="Profi"><label for="r-pro">Profi</label></div>
+          </div>
+          <div class="err-msg" id="err-r-level">Bitte wählen</div>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Profilbild (optional)</label>
+          <div class="upload-area">
+            <input type="file" accept="image/*" onchange="handleUpload(this)">
+            <div class="upload-icon"><svg viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg></div>
+            <div class="upload-text" id="upload-txt"><strong>Datei auswählen</strong> oder hierher ziehen</div>
+          </div>
+        </div>
+        <div class="divider-row"><div class="div-line"></div><div class="div-text">fast geschafft</div><div class="div-line"></div></div>
+        <div class="fgroup">
+          <label class="flabel" for="r-pw">Passwort</label>
+          <input class="finput" type="password" id="r-pw" placeholder="Mindestens 8 Zeichen" oninput="checkPwStrength(this.value)">
+          <div class="err-msg" id="err-r-pw">Passwort erfüllt nicht alle Anforderungen</div>
+          <!-- Stärke-Balken -->
+          <div id="pw-strength-wrap" style="margin-top:10px;display:none;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <div style="flex:1;height:5px;background:var(--border);border-radius:4px;overflow:hidden;">
+                <div id="pw-bar" style="height:100%;width:0%;border-radius:4px;transition:all .3s;"></div>
+              </div>
+              <span id="pw-label" style="font-size:11px;font-weight:600;min-width:60px;text-align:right;"></span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div class="pw-rule" id="rule-len">
+                <svg class="rule-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                Mindestens 8 Zeichen
+              </div>
+              <div class="pw-rule" id="rule-upper">
+                <svg class="rule-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                Großbuchstabe (A–Z)
+              </div>
+              <div class="pw-rule" id="rule-lower">
+                <svg class="rule-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                Kleinbuchstabe (a–z)
+              </div>
+              <div class="pw-rule" id="rule-num">
+                <svg class="rule-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                Mindestens eine Zahl (0–9)
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="btn-submit" onclick="doRegister()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          Jetzt registrieren
+        </button>
+      </div>
+
+      <!-- SUCCESS -->
+      <div id="view-success" class="success-view">
+        <div class="success-icon"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>
+        <div class="success-title">Du bist dabei, <span id="success-name-display"></span>!</div>
+        <div class="success-sub">Deine Anmeldung wurde gespeichert.<br>Viel Spaß auf der Piste! ⛷️</div>
+        <button class="btn-submit" style="margin-top:20px;" onclick="enterApp()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Los geht's zum Skiplaner!
+        </button>
+      </div><!-- /view-success -->
+
+      </div><!-- /login-card-scroll -->
+
+    </div><!-- /login-card -->
+    <div class="login-footer">BKB Skiplaner · Schulprojekt IT-Klasse 2025</div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════
+     APP SHELL
+════════════════════════════════ -->
+<div id="app-shell">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2L8.5 8H4l3.5 3.5L6 18l6-2.5L18 18l-1.5-6.5L20 8h-4.5z"/></svg></div>
+      <div><div class="logo-name">BKB Skiplaner</div><div class="logo-sub">Klassenfahrt 2025</div></div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-user">
+      <div class="uname" id="app-username">Max Schneider</div>
+      <div class="avatar" id="app-avatar">MS</div>
+      <div class="logout-btn" onclick="doLogout()">Abmelden</div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section">Hauptmenü</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <div class="nicon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('gruppen',this)">
+      <div class="nicon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+      Skigruppenplaner
+    </div>
+    <div class="nav-item" onclick="showPage('zimmer',this)">
+      <div class="nicon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      Zimmereinteilung
+    </div>
+    <div class="nav-item" onclick="showPage('info',this)">
+      <div class="nicon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+      Infozentrum
+      <span class="nbadge">2</span>
+    </div>
+    <div class="nav-item" onclick="showPage('anmeldung',this)">
+      <div class="nicon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      Anmeldeliste
+    </div>
+    <div class="sidebar-section">Kommunikation</div>
+    <div class="nav-item" onclick="showPage('chat',this)">
+      <div class="nicon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+      Chat
+      <span class="nbadge">3</span>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="dash-hero">
+        <div class="dash-hero-title" id="dash-greeting">Guten Morgen! ⛷️</div>
+        <div class="dash-hero-sub">Noch 18 Tage bis zur Skifahrt nach Sölden.</div>
+        <div class="countdown-row">
+          <div class="countdown-box"><div class="countdown-num" id="cd-days">18</div><div class="countdown-lbl">Tage</div></div>
+          <div class="countdown-box"><div class="countdown-num" id="cd-hours">06</div><div class="countdown-lbl">Std.</div></div>
+          <div class="countdown-box"><div class="countdown-num" id="cd-mins">24</div><div class="countdown-lbl">Min.</div></div>
+        </div>
+      </div>
+      <div class="grid4" style="margin-bottom:20px;">
+        <div class="stat-card"><div class="stat-label">Angemeldete Schüler</div><div class="stat-val">42</div><span class="stat-tag tag-green">von 48 gesamt</span></div>
+        <div class="stat-card"><div class="stat-label">Skilehrer</div><div class="stat-val">6</div><span class="stat-tag tag-blue">4 Ski · 2 Snowboard</span></div>
+        <div class="stat-card"><div class="stat-label">Zimmer belegt</div><div class="stat-val">8/12</div><span class="stat-tag tag-amber">4 noch frei</span></div>
+        <div class="stat-card"><div class="stat-label">Nicht eingeteilt</div><div class="stat-val" style="color:var(--danger);">5</div><span class="stat-tag tag-red">brauchen Gruppe</span></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Fortschritt</div>
+          <div class="progress-row"><div class="progress-label">Gruppenplanung</div><div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div><div class="progress-val">88%</div></div>
+          <div class="progress-row"><div class="progress-label">Zimmereinteilung</div><div class="progress-bar"><div class="progress-fill" style="width:67%;background:#10b981"></div></div><div class="progress-val">67%</div></div>
+          <div class="progress-row"><div class="progress-label">Anmeldungen</div><div class="progress-bar"><div class="progress-fill" style="width:75%;background:#f59e0b"></div></div><div class="progress-val">75%</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Letzte Aktivitäten</div>
+          <div class="activity-item"><div class="activity-dot" style="background:#10b981"></div><div class="activity-text">Anna K. hat sich angemeldet</div><div class="activity-time">Vor 2 Std.</div></div>
+          <div class="activity-item"><div class="activity-dot" style="background:#3b82f6"></div><div class="activity-text">Zimmer 103 wurde belegt</div><div class="activity-time">Vor 4 Std.</div></div>
+          <div class="activity-item"><div class="activity-dot" style="background:#f59e0b"></div><div class="activity-text">Neue Mitteilung: Packliste</div><div class="activity-time">Gestern</div></div>
+          <div class="activity-item"><div class="activity-dot" style="background:#8b5cf6"></div><div class="activity-text">Tim M. wurde Gruppe Richter zugewiesen</div><div class="activity-time">Gestern</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GRUPPENPLANER ── -->
+    <div class="page" id="page-gruppen">
+      <div class="page-title">Skigruppenplaner</div>
+      <div class="page-sub">Ziehe Schüler per Drag & Drop in die Gruppen der Skilehrer.</div>
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;">
+        <div class="drag-pool">
+          <div class="pool-title">Nicht zugeteilt (<span id="pool-count">3</span>)</div>
+          <div id="pool">
+            <div class="person-chip" draggable="true" data-id="anna"><div class="chip-avatar" style="background:#dbeafe;color:#1d4ed8;">AK</div><div><div class="chip-name">Anna K.</div><div class="chip-sub">10B · Snowboard · Anfänger</div></div></div>
+            <div class="person-chip" draggable="true" data-id="lena"><div class="chip-avatar" style="background:#fef9c3;color:#854d0e;">LB</div><div><div class="chip-name">Lena B.</div><div class="chip-sub">11C · Ski · Anfänger</div></div></div>
+            <div class="person-chip" draggable="true" data-id="jonas"><div class="chip-avatar" style="background:#f3e8ff;color:#6b21a8;">JH</div><div><div class="chip-name">Jonas H.</div><div class="chip-sub">10A · Ski · Fortgeschritten</div></div></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- Richter -->
+          <div class="teacher-card">
+            <div class="teacher-header">
+              <div class="teacher-avatar" style="background:#fee2e2;color:#991b1b;">HR</div>
+              <div><div class="teacher-name">Herr Richter</div><div class="teacher-sub">Skilehrer · Profi-Niveau</div></div>
+              <div style="margin-left:auto;display:flex;gap:6px;"><span class="pill tag-blue">Ski</span><span class="pill tag-amber">Profi</span></div>
+            </div>
+            <div id="assigned-richter">
+              <div class="assigned-chip"><div class="chip-avatar" style="background:#dcfce7;color:#166534;width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">SL</div><div style="flex:1;"><div class="chip-name" style="font-size:12px;">Sophie L.</div><div class="chip-sub">10A · Ski · Anfänger</div></div><button class="remove-btn" onclick="removeChip(this,'richter')">×</button></div>
+              <div class="assigned-chip"><div class="chip-avatar" style="background:#ffe4e6;color:#9f1239;width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">MH</div><div style="flex:1;"><div class="chip-name" style="font-size:12px;">Max H.</div><div class="chip-sub">10B · Ski · Fortgeschritten</div></div><button class="remove-btn" onclick="removeChip(this,'richter')">×</button></div>
+            </div>
+            <div class="drop-zone" ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="onDrop(event,'richter')">+ Schüler hierher ziehen</div>
+          </div>
+          <!-- Müller -->
+          <div class="teacher-card">
+            <div class="teacher-header">
+              <div class="teacher-avatar" style="background:#dcfce7;color:#166534;">FM</div>
+              <div><div class="teacher-name">Frau Müller</div><div class="teacher-sub">Skilehrerin · Fortgeschritten</div></div>
+              <div style="margin-left:auto;display:flex;gap:6px;"><span class="pill tag-green">Snowboard</span><span class="pill tag-purple">Fortgeschritten</span></div>
+            </div>
+            <div id="assigned-mueller">
+              <div class="assigned-chip"><div class="chip-avatar" style="background:#e0e7ff;color:#3730a3;width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">JK</div><div style="flex:1;"><div class="chip-name" style="font-size:12px;">Jonas K.</div><div class="chip-sub">11A · Snowboard · Profi</div></div><button class="remove-btn" onclick="removeChip(this,'mueller')">×</button></div>
+            </div>
+            <div class="drop-zone" ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="onDrop(event,'mueller')">+ Schüler hierher ziehen</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ZIMMER ── -->
+    <div class="page" id="page-zimmer">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div class="page-title">Zimmereinteilung</div>
+        <button class="btn btn-primary" onclick="document.getElementById('modal-zimmer').classList.add('open')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Zimmer anlegen</button>
+      </div>
+      <div class="page-sub">Hotel Alpenstern · Sölden, Österreich</div>
+      <div class="grid3" id="rooms-grid">
+        <div class="room-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div class="room-num">Zimmer 101</div><span class="pill tag-green">3/4 belegt</span></div>
+          <div class="room-attrs"><span class="pill tag-blue">4-Bett</span><span class="pill" style="background:#fdf2f8;color:#9d174d;">Mädchen</span><span class="pill tag-amber">EG</span></div>
+          <div class="beds-row"><div class="bed-icon taken"></div><div class="bed-icon taken"></div><div class="bed-icon taken"></div><div class="bed-icon"></div></div>
+          <div class="occupant-name">Sophie L.</div><div class="occupant-name">Lena B.</div><div class="occupant-name">Anna K.</div>
+          <div class="drop-zone" style="margin-top:10px;" ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="dropRoom(event,'101')">+ Schüler zuweisen</div>
+        </div>
+        <div class="room-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div class="room-num">Zimmer 102</div><span class="pill tag-amber">2/3 belegt</span></div>
+          <div class="room-attrs"><span class="pill tag-blue">3-Bett</span><span class="pill" style="background:#eff6ff;color:#1e40af;">Jungen</span><span class="pill tag-amber">EG</span></div>
+          <div class="beds-row"><div class="bed-icon taken"></div><div class="bed-icon taken"></div><div class="bed-icon"></div></div>
+          <div class="occupant-name">Tim M.</div><div class="occupant-name">Max H.</div>
+          <div class="drop-zone" style="margin-top:10px;" ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="dropRoom(event,'102')">+ Schüler zuweisen</div>
+        </div>
+        <div class="room-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div class="room-num">Zimmer 103</div><span class="pill tag-red">0/2 belegt</span></div>
+          <div class="room-attrs"><span class="pill tag-blue">2-Bett</span><span class="pill tag-green">Gemischt</span><span class="pill" style="background:#f1f5f9;color:#475569;">1. OG</span></div>
+          <div class="beds-row"><div class="bed-icon"></div><div class="bed-icon"></div></div>
+          <div class="drop-zone" style="margin-top:10px;" ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="dropRoom(event,'103')">+ Schüler zuweisen</div>
+        </div>
+        <div class="room-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div class="room-num">Zimmer 104</div><span class="pill tag-green">4/4 belegt</span></div>
+          <div class="room-attrs"><span class="pill tag-blue">4-Bett</span><span class="pill" style="background:#eff6ff;color:#1e40af;">Jungen</span><span class="pill" style="background:#f1f5f9;color:#475569;">1. OG</span></div>
+          <div class="beds-row"><div class="bed-icon taken"></div><div class="bed-icon taken"></div><div class="bed-icon taken"></div><div class="bed-icon taken"></div></div>
+          <div class="occupant-name">Jonas K.</div><div class="occupant-name">Lukas P.</div><div class="occupant-name">Ben W.</div><div class="occupant-name">Felix R.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── INFOZENTRUM ── -->
+    <div class="page" id="page-info">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div class="page-title">Infozentrum</div>
+        <button class="btn btn-primary" onclick="showToast('Neue Mitteilung erstellt!')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Hinzufügen</button>
+      </div>
+      <div class="page-sub">Wichtige Mitteilungen und Dokumente für alle Teilnehmer.</div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Mitteilungen</div>
+          <div class="info-item">
+            <div class="info-icon-box" style="background:#eff6ff;color:#1d4ed8;"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+            <div style="flex:1;"><div class="info-title">Abfahrt: 15. Feb. um 06:00 Uhr</div><div class="info-meta">Treffpunkt Schulhof · 12. Feb.</div></div>
+            <span class="pill tag-blue" style="flex-shrink:0;">Neu</span>
+          </div>
+          <div class="info-item">
+            <div class="info-icon-box" style="background:#fffbeb;color:#92400e;"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div><div class="info-title">Helmpflicht auf allen Pisten!</div><div class="info-meta">Pflichtausrüstung · 10. Feb.</div></div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon-box" style="background:#ecfdf5;color:#065f46;"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div><div class="info-title">Apres-Ski-Abend geplant</div><div class="info-meta">Freitag, 20. Feb. ab 18:00</div></div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon-box" style="background:#f3e8ff;color:#6b21a8;"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+            <div><div class="info-title">Wochenprogramm veröffentlicht</div><div class="info-meta">5. Feb.</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Dokumente</div>
+          <div class="doc-item" onclick="showToast('Packliste wird heruntergeladen...')">
+            <div class="doc-ext" style="background:#fef2f2;color:#991b1b;">PDF</div>
+            <div style="flex:1;"><div class="doc-name">Packliste_Skifahrt.pdf</div><div class="doc-size">245 KB · 10. Feb.</div></div>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="doc-item" onclick="showToast('Einverständnis wird heruntergeladen...')">
+            <div class="doc-ext" style="background:#eff6ff;color:#1d4ed8;">DOC</div>
+            <div style="flex:1;"><div class="doc-name">Einverständniserklärung.docx</div><div class="doc-size">88 KB · 8. Feb.</div></div>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="doc-item" onclick="showToast('Programm wird heruntergeladen...')">
+            <div class="doc-ext" style="background:#ecfdf5;color:#065f46;">XLS</div>
+            <div style="flex:1;"><div class="doc-name">Wochenprogramm.xlsx</div><div class="doc-size">120 KB · 5. Feb.</div></div>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div class="doc-item" onclick="showToast('Notfallkontakte wird heruntergeladen...')">
+            <div class="doc-ext" style="background:#fffbeb;color:#92400e;">PDF</div>
+            <div style="flex:1;"><div class="doc-name">Notfallkontakte.pdf</div><div class="doc-size">54 KB · 3. Feb.</div></div>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ANMELDELISTE ── -->
+    <div class="page" id="page-anmeldung">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div class="page-title">Anmeldeliste</div>
+        <div style="display:flex;gap:10px;">
+          <input type="text" id="search-input" placeholder="Suchen..." oninput="filterTable()" style="height:38px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;background:white;outline:none;width:190px;">
+          <button class="btn btn-primary" onclick="showToast('Export wird vorbereitet...')"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportieren</button>
+        </div>
+      </div>
+      <div class="page-sub">42 angemeldete Schüler · Stand: 24.01.2025</div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap">
+          <table id="student-table">
+            <thead><tr><th>Name</th><th>Klasse</th><th>Sportart</th><th>Level</th><th>Gruppe</th><th>Zimmer</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#dcfce7;color:#166534;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">SL</div>Sophie L.</div></td><td>10A</td><td>Ski</td><td><span class="pill tag-green">Anfänger</span></td><td>Gruppe Richter</td><td>101</td><td><span class="pill tag-green">Angemeldet</span></td></tr>
+              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#dbeafe;color:#1d4ed8;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">TM</div>Tim M.</div></td><td>10B</td><td>Ski</td><td><span class="pill tag-amber">Fortgeschritten</span></td><td>Gruppe Richter</td><td>102</td><td><span class="pill tag-green">Angemeldet</span></td></tr>
+              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#fef9c3;color:#854d0e;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">AK</div>Anna K.</div></td><td>10B</td><td>Snowboard</td><td><span class="pill tag-green">Anfänger</span></td><td>—</td><td>101</td><td><span class="pill tag-amber">Ausstehend</span></td></tr>
+              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#f3e8ff;color:#6b21a8;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">JK</div>Jonas K.</div></td><td>11A</td><td>Snowboard</td><td><span class="pill tag-purple">Profi</span></td><td>Gruppe Müller</td><td>104</td><td><span class="pill tag-green">Angemeldet</span></td></tr>
+              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#ffe4e6;color:#9f1239;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">MH</div>Max H.</div></td><td>10B</td><td>Ski</td><td><span class="pill tag-amber">Fortgeschritten</span></td><td>Gruppe Richter</td><td>102</td><td><span class="pill tag-green">Angemeldet</span></td></tr>
+              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#ecfdf5;color:#065f46;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">LB</div>Lena B.</div></td><td>11C</td><td>Ski</td><td><span class="pill tag-green">Anfänger</span></td><td>—</td><td>101</td><td><span class="pill tag-amber">Ausstehend</span></td></tr>
+              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#e0e7ff;color:#3730a3;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">LP</div>Lukas P.</div></td><td>11B</td><td>Ski</td><td><span class="pill tag-purple">Profi</span></td><td>Gruppe Müller</td><td>104</td><td><span class="pill tag-green">Angemeldet</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CHAT ── -->
+    <div class="page" id="page-chat">
+      <div class="page-title" style="margin-bottom:16px;">Chat</div>
+      <div class="chat-layout">
+        <div class="chat-sidebar">
+          <div class="chat-sidebar-title">Gruppen</div>
+          <div class="chat-channel active" onclick="switchChannel(this,'Gruppe Alle','GA','#dbeafe','#1d4ed8','42 Teilnehmer')">
+            <div class="ch-avatar" style="background:#dbeafe;color:#1d4ed8;">GA</div>
+            <div><div class="ch-name">Gruppe Alle</div><div class="ch-preview">Treffpunkt morgen...</div></div>
+          </div>
+          <div class="chat-channel" onclick="switchChannel(this,'Gruppe Richter','GR','#fee2e2','#991b1b','9 Teilnehmer')">
+            <div class="ch-avatar" style="background:#fee2e2;color:#991b1b;">GR</div>
+            <div><div class="ch-name">Gruppe Richter</div><div class="ch-preview">Helme mitbringen!</div></div>
+          </div>
+          <div class="chat-channel" onclick="switchChannel(this,'Gruppe Müller','GM','#dcfce7','#166534','8 Teilnehmer')">
+            <div class="ch-avatar" style="background:#dcfce7;color:#166534;">GM</div>
+            <div><div class="ch-name">Gruppe Müller</div><div class="ch-preview">Wann treffen wir uns?</div></div>
+          </div>
+          <div class="chat-sidebar-title" style="margin-top:16px;">Direkt</div>
+          <div class="chat-channel" onclick="switchChannel(this,'Herr Richter','HR','#fef9c3','#854d0e','Skilehrer')">
+            <div class="ch-avatar" style="background:#fef9c3;color:#854d0e;">HR</div>
+            <div><div class="ch-name">Herr Richter</div><div class="ch-preview">Danke für die Info!</div></div>
+          </div>
+          <div class="chat-channel" onclick="switchChannel(this,'Frau Müller','FM','#f3e8ff','#6b21a8','Skilehrerin')">
+            <div class="ch-avatar" style="background:#f3e8ff;color:#6b21a8;">FM</div>
+            <div><div class="ch-name">Frau Müller</div><div class="ch-preview">Alles klar!</div></div>
+          </div>
+        </div>
+        <div class="chat-main">
+          <div class="chat-topbar">
+            <div class="ch-avatar" id="chat-av" style="background:#dbeafe;color:#1d4ed8;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;">GA</div>
+            <div><div class="ch-title" id="chat-ch-title">Gruppe Alle</div><div class="ch-count" id="chat-ch-count">42 Teilnehmer</div></div>
+          </div>
+          <div class="chat-messages" id="chat-messages">
+            <div class="date-divider">Heute, 09:00</div>
+            <div class="msg-group">
+              <div class="msg-avatar" style="background:#fee2e2;color:#991b1b;">HR</div>
+              <div class="msg-content"><div class="msg-sender">Herr Richter</div><div class="msg-bubble">Guten Morgen alle! Treffpunkt heute um 8:30 Uhr an der Talstation. Bitte pünktlich sein!</div><div class="msg-time">09:02</div></div>
+            </div>
+            <div class="msg-group">
+              <div class="msg-avatar" style="background:#dcfce7;color:#166534;">SL</div>
+              <div class="msg-content"><div class="msg-sender">Sophie L.</div><div class="msg-bubble">Wir sind dabei! Fahren gerade mit dem Bus.</div><div class="msg-time">09:14</div></div>
+            </div>
+            <div class="msg-group own">
+              <div class="msg-avatar" id="own-avatar" style="background:#dbeafe;color:#1d4ed8;">MS</div>
+              <div class="msg-content"><div class="msg-sender" id="own-sender">Du</div><div class="msg-bubble">Super, bis gleich! ⛷️</div><div class="msg-time">09:15</div></div>
+            </div>
+            <div class="msg-group">
+              <div class="msg-avatar" style="background:#f3e8ff;color:#6b21a8;">FM</div>
+              <div class="msg-content"><div class="msg-sender">Frau Müller</div><div class="msg-bubble">Snowboard-Gruppe bitte alle Helme mitbringen! Es gibt eine Kontrolle am Lift.</div><div class="msg-time">09:22</div></div>
+            </div>
+            <div class="msg-group">
+              <div class="msg-avatar" style="background:#fef9c3;color:#854d0e;">TM</div>
+              <div class="msg-content"><div class="msg-sender">Tim M.</div><div class="msg-bubble">Mein Helm liegt noch im Zimmer — komme 5 min später 😅</div><div class="msg-time">09:28</div></div>
+            </div>
+          </div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chat-input" type="text" placeholder="Nachricht schreiben..." onkeydown="if(event.key==='Enter')sendMsg()">
+            <button class="btn-send" onclick="sendMsg()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app-shell -->
+
+<!-- MODAL: Zimmer anlegen -->
+<div class="modal-overlay" id="modal-zimmer">
+  <div class="modal">
+    <div class="modal-title">Neues Zimmer anlegen</div>
+    <div class="grid2">
+      <div class="form-group"><label class="form-label">Zimmernummer</label><input class="form-input" type="text" placeholder="z.B. 105" id="new-room-num"></div>
+      <div class="form-group"><label class="form-label">Bettanzahl</label><select class="form-select" id="new-room-beds"><option value="2">2-Bett</option><option value="3">3-Bett</option><option value="4" selected>4-Bett</option><option value="5">5-Bett</option></select></div>
+    </div>
+    <div class="grid2">
+      <div class="form-group"><label class="form-label">Etage</label><select class="form-select"><option>Erdgeschoss</option><option>1. OG</option><option>2. OG</option></select></div>
+      <div class="form-group"><label class="form-label">Belegung</label><select class="form-select"><option>Mädchen</option><option>Jungen</option><option>Gemischt</option></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="document.getElementById('modal-zimmer').classList.remove('open')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="addRoom()">Anlegen</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+/* ═══════ BACKGROUND FX ═══════ */
+(function(){
+  // Stars
+  const sc = document.getElementById('stars');
+  for(let i=0;i<90;i++){
+    const s=document.createElement('div');s.className='star';
+    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*75}%;--dur:${2+Math.random()*4}s;--delay:${Math.random()*6}s;opacity:${.15+Math.random()*.8}`;
+    sc.appendChild(s);
+  }
+  // Snowflakes
+  const fc=document.getElementById('snowflakes');
+  const chars=['❄','❅','❆','*','·'];
+  for(let i=0;i<20;i++){
+    const f=document.createElement('div');f.className='flake';
+    f.textContent=chars[Math.floor(Math.random()*chars.length)];
+    f.style.cssText=`--size:${9+Math.random()*16}px;--speed:${7+Math.random()*11}s;--delay:${Math.random()*12}s;--left:${Math.random()*100}%;left:${Math.random()*100}%`;
+    fc.appendChild(f);
+  }
+})();
+
+/* ═══════ COUNTDOWN ═══════ */
+(function(){
+  const target=new Date('2026-02-15T06:00:00');
+  function update(){
+    const diff=target-new Date();
+    const el=document.getElementById('cd-days');
+    if(!el)return;
+    if(diff<=0){
+      document.getElementById('cd-days').textContent='00';
+      document.getElementById('cd-hours').textContent='00';
+      document.getElementById('cd-mins').textContent='00';
+      return;
+    }
+    const d=Math.floor(diff/86400000);
+    const h=Math.floor((diff%86400000)/3600000);
+    const m=Math.floor((diff%3600000)/60000);
+    document.getElementById('cd-days').textContent=String(d).padStart(2,'0');
+    document.getElementById('cd-hours').textContent=String(h).padStart(2,'0');
+    document.getElementById('cd-mins').textContent=String(m).padStart(2,'0');
+  }
+  update();setInterval(update,60000);
+})();
+
+/* ═══════ PASSWORT-STÄRKE ═══════ */
+function checkPwStrength(pw){
+  const wrap = document.getElementById('pw-strength-wrap');
+  wrap.style.display = pw.length > 0 ? 'block' : 'none';
+
+  const rules = {
+    len:   pw.length >= 8,
+    upper: /[A-Z]/.test(pw),
+    lower: /[a-z]/.test(pw),
+    num:   /[0-9]/.test(pw),
+  };
+
+  Object.entries(rules).forEach(([key, ok]) => {
+    const el = document.getElementById('rule-' + key);
+    el.classList.toggle('ok', ok);
+    const icon = el.querySelector('.rule-icon');
+    if(ok){
+      icon.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+    } else {
+      icon.innerHTML = '<circle cx="12" cy="12" r="10"/>';
+    }
+  });
+
+  const score = Object.values(rules).filter(Boolean).length;
+  const bar   = document.getElementById('pw-bar');
+  const label = document.getElementById('pw-label');
+  const levels = [
+    {pct:'25%', color:'#ef4444', text:'Schwach'},
+    {pct:'50%', color:'#f59e0b', text:'Mäßig'},
+    {pct:'75%', color:'#3b82f6', text:'Gut'},
+    {pct:'100%',color:'#10b981', text:'Stark'},
+  ];
+  const lvl = levels[score - 1] || {pct:'0%', color:'#e2e8f0', text:''};
+  bar.style.width   = lvl.pct;
+  bar.style.background = lvl.color;
+  label.textContent = lvl.text;
+  label.style.color = lvl.color;
+}
+
+
+let currentUser = null;
+
+function switchTab(tab){
+  const isLogin = tab==='login';
+  document.getElementById('tab-login').classList.toggle('active',isLogin);
+  document.getElementById('tab-register').classList.toggle('active',!isLogin);
+  document.getElementById('view-login').style.display=isLogin?'block':'none';
+  document.getElementById('view-register').style.display=isLogin?'none':'block';
+  document.getElementById('view-success').style.display='none';
+  document.getElementById('login-main-title').textContent=isLogin?'Willkommen zurück!':'Jetzt registrieren';
+  document.getElementById('login-main-sub').textContent=isLogin?'Meld dich an und check deinen Ski-Status.':'Sichere dir deinen Platz auf der Piste.';
+}
+
+function doLogin(){
+  const email=document.getElementById('l-email').value.trim();
+  const pw=document.getElementById('l-pw').value;
+  let ok=true;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){show('err-l-email',true);ok=false;}else show('err-l-email',false);
+  if(!pw){show('err-l-pw',true);ok=false;}else show('err-l-pw',false);
+  if(!ok)return;
+  currentUser={name:'Max Schneider',initials:'MS',email};
+  enterApp();
+}
+
+function doRegister(){
+  const vn=document.getElementById('r-vn').value.trim();
+  const nn=document.getElementById('r-nn').value.trim();
+  const email=document.getElementById('r-email').value.trim();
+  const klasse=document.getElementById('r-klasse').value;
+  const sport=document.querySelector('input[name="r-sport"]:checked');
+  const level=document.querySelector('input[name="r-level"]:checked');
+  const pw=document.getElementById('r-pw').value;
+  let ok=true;
+  const chk=(id,cond)=>{show(id,!cond);if(!cond)ok=false;};
+  chk('err-r-vn',vn.length>1);
+  chk('err-r-nn',nn.length>1);
+  chk('err-r-email',/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+  chk('err-r-klasse',!!klasse);
+  chk('err-r-sport',!!sport);
+  chk('err-r-level',!!level);
+  const pwValid = pw.length >= 8 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /[0-9]/.test(pw);
+  chk('err-r-pw', pwValid);
+  if(!ok)return;
+  const fullName=vn+' '+nn;
+  const initials=(vn[0]+nn[0]).toUpperCase();
+  currentUser={name:fullName,initials,email,klasse,sport:sport.value,level:level.value};
+  document.getElementById('success-name-display').textContent=vn+'!';
+  document.getElementById('view-register').style.display='none';
+  document.getElementById('view-success').style.display='block';
+}
+
+function enterApp(){
+  if(!currentUser) currentUser={name:'Max Schneider',initials:'MS'};
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-shell').classList.add('visible');
+  document.getElementById('app-username').textContent=currentUser.name;
+  document.getElementById('app-avatar').textContent=currentUser.initials;
+  document.getElementById('dash-greeting').textContent='Hallo, '+currentUser.name.split(' ')[0]+'! ⛷️';
+}
+
+function doLogout(){
+  document.getElementById('app-shell').classList.remove('visible');
+  document.getElementById('login-screen').classList.remove('hidden');
+  switchTab('login');
+}
+
+function show(id,visible){
+  document.getElementById(id).style.display=visible?'block':'none';
+}
+
+function handleUpload(inp){
+  if(inp.files&&inp.files[0]){
+    document.getElementById('upload-txt').innerHTML=`<strong style="color:#10b981">✓ ${inp.files[0].name}</strong>`;
+  }
+}
+
+/* ═══════ NAVIGATION ═══════ */
+function showPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ═══════ DRAG & DROP ═══════ */
+let dragSrc=null;
+
+document.addEventListener('dragstart',e=>{
+  const chip=e.target.closest('.person-chip');
+  if(chip){dragSrc=chip;setTimeout(()=>chip.classList.add('dragging'),0);}
+});
+document.addEventListener('dragend',e=>{
+  const chip=e.target.closest('.person-chip');
+  if(chip)chip.classList.remove('dragging');
+});
+
+function onOver(e){e.preventDefault();e.currentTarget.classList.add('over');}
+function onLeave(e){e.currentTarget.classList.remove('over');}
+
+function onDrop(e,teacher){
+  e.preventDefault();e.currentTarget.classList.remove('over');
+  if(!dragSrc)return;
+  const name=dragSrc.querySelector('.chip-name').textContent;
+  const info=dragSrc.querySelector('.chip-sub').textContent;
+  const av=dragSrc.querySelector('.chip-avatar');
+  const initials=av.textContent;
+  const bg=av.style.background;
+  const col=av.style.color;
+  dragSrc.remove();
+  updatePoolCount(-1);
+  addAssigned(teacher,initials,name,info,bg,col);
+  showToast(name+' → Gruppe '+teacher.charAt(0).toUpperCase()+teacher.slice(1));
+  dragSrc=null;
+}
+
+function dropRoom(e,room){
+  e.preventDefault();e.currentTarget.classList.remove('over');
+  if(!dragSrc)return;
+  const name=dragSrc.querySelector('.chip-name').textContent;
+  showToast(name+' → Zimmer '+room+' zugewiesen!');
+  dragSrc=null;
+}
+
+function updatePoolCount(delta){
+  const el=document.getElementById('pool-count');
+  el.textContent=parseInt(el.textContent)+delta;
+}
+
+function addAssigned(teacher,initials,name,info,bg,col){
+  const c=document.createElement('div');c.className='assigned-chip';
+  c.innerHTML=`<div class="chip-avatar" style="background:${bg};color:${col};width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${initials}</div><div style="flex:1;"><div class="chip-name" style="font-size:12px;">${name}</div><div class="chip-sub">${info}</div></div><button class="remove-btn" onclick="removeChip(this,'${teacher}','${initials}','${name}','${info}','${bg}','${col}')">×</button>`;
+  document.getElementById('assigned-'+teacher).appendChild(c);
+}
+
+function removeChip(btn,teacher,initials,name,info,bg,col){
+  btn.closest('.assigned-chip').remove();
+  const pool=document.getElementById('pool');
+  const c=document.createElement('div');c.className='person-chip';c.draggable=true;
+  c.innerHTML=`<div class="chip-avatar" style="background:${bg};color:${col};">${initials}</div><div><div class="chip-name">${name}</div><div class="chip-sub">${info}</div></div>`;
+  pool.appendChild(c);
+  updatePoolCount(1);
+  showToast(name+' wurde zurück in den Pool verschoben.');
+}
+
+/* ═══════ ZIMMER ═══════ */
+function addRoom(){
+  const num=document.getElementById('new-room-num').value||'105';
+  const beds=document.getElementById('new-room-beds').value;
+  const count=parseInt(beds);
+  const icons=Array.from({length:count},()=>'<div class="bed-icon"></div>').join('');
+  const c=document.createElement('div');c.className='room-card';
+  c.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div class="room-num">Zimmer ${num}</div><span class="pill tag-red">0/${count} belegt</span></div><div class="room-attrs"><span class="pill tag-blue">${beds}</span><span class="pill tag-green">Gemischt</span></div><div class="beds-row">${icons}</div><div class="drop-zone" style="margin-top:10px;" ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="dropRoom(event,'${num}')">+ Schüler zuweisen</div>`;
+  document.getElementById('rooms-grid').appendChild(c);
+  document.getElementById('modal-zimmer').classList.remove('open');
+  showToast('Zimmer '+num+' wurde angelegt!');
+}
+
+/* ═══════ SUCHE ═══════ */
+function filterTable(){
+  const q=document.getElementById('search-input').value.toLowerCase();
+  document.querySelectorAll('#student-table tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});
+}
+
+/* ═══════ CHAT ═══════ */
+function switchChannel(el,title,av,bg,col,count){
+  document.querySelectorAll('.chat-channel').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('chat-ch-title').textContent=title;
+  document.getElementById('chat-ch-count').textContent=count;
+  const a=document.getElementById('chat-av');
+  a.textContent=av;a.style.background=bg;a.style.color=col;
+}
+
+function sendMsg(){
+  const inp=document.getElementById('chat-input');
+  const text=inp.value.trim();if(!text)return;
+  const msgs=document.getElementById('chat-messages');
+  const now=new Date();
+  const t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const initials=currentUser?currentUser.initials:'MS';
+  const div=document.createElement('div');div.className='msg-group own';
+  div.innerHTML=`<div class="msg-avatar" style="background:#dbeafe;color:#1d4ed8;">${initials}</div><div class="msg-content"><div class="msg-sender">Du</div><div class="msg-bubble">${text}</div><div class="msg-time">${t}</div></div>`;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;inp.value='';
+}
+
+/* ═══════ TOAST ═══════ */
+function showToast(msg){
+  const wrap=document.getElementById('toast-wrap');
+  const t=document.createElement('div');t.className='toast';
+  t.innerHTML=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>${msg}`;
+  wrap.appendChild(t);
+  setTimeout(()=>{t.style.transition='opacity .4s';t.style.opacity='0';setTimeout(()=>t.remove(),400);},2600);
+}
+
+function showToastGlobal(msg){showToast(msg);}
+
+/* Modal schließen per Klick außen */
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
+});
+</script>
+</body>
+</html>
