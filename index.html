@@ -1,19 +1,16 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<!-- Supabase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const SUPABASE_URL = 'https://DEINE-URL.supabase.co';   // ← hier eintragen
-  const SUPABASE_KEY = 'eyJ...DEIN-ANON-KEY...';           // ← hier eintragen
-
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BKB Skiplaner</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://zzuzefpmbyvxlxdecdkf.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_4r-zHrTliIuD-p3IlkHRnw_B7qxl-Pe';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+</script>
 <style>
 /* ════════════════════════════════════
    BASE
@@ -965,11 +962,31 @@ function doLogin(){
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){show('err-l-email',true);ok=false;}else show('err-l-email',false);
   if(!pw){show('err-l-pw',true);ok=false;}else show('err-l-pw',false);
   if(!ok)return;
-  currentUser={name:'Max Schneider',initials:'MS',email};
-  enterApp();
+
+  const btn=document.querySelector('#view-login .btn-submit');
+  btn.textContent='Wird angemeldet…';btn.disabled=true;
+
+  sb.auth.signInWithPassword({email,password:pw}).then(({data,error})=>{
+    btn.textContent='Anmelden';btn.disabled=false;
+    if(error){
+      document.getElementById('err-l-pw').textContent='E-Mail oder Passwort falsch';
+      show('err-l-pw',true);return;
+    }
+    sb.from('profiles').select('*').eq('id',data.user.id).single().then(({data:profile})=>{
+      const name = profile?.full_name || email;
+      const parts = name.trim().split(' ');
+      currentUser={
+        name,
+        initials:(parts[0][0]+(parts[1]?parts[1][0]:'')).toUpperCase(),
+        email:data.user.email,
+        rolle:profile?.rolle||'schueler'
+      };
+      enterApp();
+    });
+  });
 }
 
-function doRegister(){
+async function doRegister(){
   const vn=document.getElementById('r-vn').value.trim();
   const nn=document.getElementById('r-nn').value.trim();
   const email=document.getElementById('r-email').value.trim();
@@ -988,16 +1005,29 @@ function doRegister(){
   const pwValid = pw.length >= 8 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /[0-9]/.test(pw);
   chk('err-r-pw', pwValid);
   if(!ok)return;
+
   const fullName=vn+' '+nn;
-  const initials=(vn[0]+nn[0]).toUpperCase();
-  currentUser={name:fullName,initials,email,klasse,sport:sport.value,level:level.value};
+  const btn=document.querySelector('#view-register .btn-submit');
+  btn.textContent='Wird registriert…';btn.disabled=true;
+
+  const {data,error}=await sb.auth.signUp({
+    email,password:pw,
+    options:{data:{full_name:fullName,klasse,sportart:sport.value,level:level.value,rolle:'schueler'}}
+  });
+  btn.textContent='Registrieren';btn.disabled=false;
+
+  if(error){
+    alert('Fehler bei der Registrierung: '+error.message);return;
+  }
+
+  currentUser={name:fullName,initials:(vn[0]+nn[0]).toUpperCase(),email,rolle:'schueler'};
   document.getElementById('success-name-display').textContent=vn+'!';
   document.getElementById('view-register').style.display='none';
   document.getElementById('view-success').style.display='block';
 }
 
 function enterApp(){
-  if(!currentUser) currentUser={name:'Max Schneider',initials:'MS'};
+  if(!currentUser)return;
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-shell').classList.add('visible');
   document.getElementById('app-username').textContent=currentUser.name;
@@ -1006,6 +1036,8 @@ function enterApp(){
 }
 
 function doLogout(){
+  sb.auth.signOut();
+  currentUser=null;
   document.getElementById('app-shell').classList.remove('visible');
   document.getElementById('login-screen').classList.remove('hidden');
   switchTab('login');
