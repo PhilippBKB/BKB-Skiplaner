@@ -1008,6 +1008,12 @@ async function doRegister(){
 
 function enterApp(){
   if(!currentUser)return;
+  // ID aus aktiver Session holen falls noch nicht gesetzt
+  if(!currentUser.id){
+    sb.auth.getSession().then(({data:{session}})=>{
+      if(session?.user?.id) currentUser.id = session.user.id;
+    });
+  }
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-shell').classList.add('visible');
   document.getElementById('app-username').textContent=currentUser.name;
@@ -1092,7 +1098,7 @@ function renderZimmer() {
       : '';
 
     // Schüler-Button: nur wenn noch Platz & noch nicht eingetragen
-    const bereitsDrin = z.zimmer_belegung?.some(b => b.user_id === currentUser?.id);
+    const bereitsDrin = z.zimmer_belegung?.some(b => b.user_id && currentUser?.id && b.user_id === currentUser.id);
     const schuelerBtn = !istLehrer && !voll
       ? bereitsDrin
         ? `<div style="margin-top:10px;font-size:12px;color:#10b981;font-weight:600;">✓ Du bist in diesem Zimmer</div>`
@@ -1124,14 +1130,21 @@ function renderZimmer() {
 }
 
 async function zimmerBeitreten(zimmerId) {
+  // Session direkt aus Supabase holen – sicherer als currentUser.id
+  const { data: { session } } = await sb.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) { showToast('Fehler: Nicht eingeloggt.'); return; }
+
   // Erst prüfen ob bereits ein Eintrag existiert, dann löschen
-  const { data: existing } = await sb.from('zimmer_belegung').select('id').eq('user_id', currentUser.id);
+  const { data: existing } = await sb.from('zimmer_belegung').select('id').eq('user_id', userId);
   if (existing && existing.length > 0) {
-    await sb.from('zimmer_belegung').delete().eq('user_id', currentUser.id);
+    await sb.from('zimmer_belegung').delete().eq('user_id', userId);
   }
   // In neues Zimmer eintragen
-  const { error } = await sb.from('zimmer_belegung').insert({ zimmer_id: zimmerId, user_id: currentUser.id });
+  const { error } = await sb.from('zimmer_belegung').insert({ zimmer_id: zimmerId, user_id: userId });
   if (error) { showToast('Fehler: ' + error.message); return; }
+  // currentUser.id aktualisieren
+  currentUser.id = userId;
   showToast('✅ Erfolgreich eingetragen!');
   ladeZimmer();
 }
