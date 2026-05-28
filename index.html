@@ -1064,6 +1064,20 @@ async function enterApp(){
   document.getElementById('nav-zimmer').classList.remove('lehrer-only');
 }
 
+const lehrerSeiten=['gruppen','anmeldung'];
+function showPage(name,el){
+  if(lehrerSeiten.includes(name) && currentUser?.rolle !== 'lehrer'){
+    showToast('🔒 Diese Seite ist nur für Lehrer zugänglich.');
+    return;
+  }
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  if(name === 'zimmer') ladeZimmer();
+  if(name === 'gruppen') ladeGruppen();
+}
+
 function doLogout(){
   sb.auth.signOut();
   currentUser=null;
