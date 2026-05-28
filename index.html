@@ -1056,17 +1056,26 @@ function handleUpload(inp){
 let zimmerData = [];
 
 async function ladeZimmer() {
-  const { data, error } = await sb.from('zimmer').select('*, zimmer_belegung(user_id, profiles(full_name))').order('nummer');
-  if (error || !data) {
-    // Fallback: Demo-Daten wenn Tabelle noch nicht existiert
-    zimmerData = [
-      { id: 1, nummer: '101', betten: 4, typ: 'Mädchen', etage: 'EG', zimmer_belegung: [] },
-      { id: 2, nummer: '102', betten: 3, typ: 'Jungen',  etage: 'EG', zimmer_belegung: [] },
-      { id: 3, nummer: '103', betten: 2, typ: 'Gemischt',etage: '1. OG', zimmer_belegung: [] },
-    ];
-  } else {
-    zimmerData = data;
+  // Schritt 1: Zimmer laden
+  const { data: zimmer, error } = await sb.from('zimmer').select('*, zimmer_belegung(user_id)').order('nummer');
+  if (error || !zimmer) { zimmerData = []; renderZimmer(); return; }
+
+  // Schritt 2: Profile zu den user_ids laden
+  const alleUserIds = [...new Set(zimmer.flatMap(z => (z.zimmer_belegung||[]).map(b => b.user_id).filter(Boolean)))];
+  let profileMap = {};
+  if (alleUserIds.length > 0) {
+    const { data: profiles } = await sb.from('profiles').select('id, full_name').in('id', alleUserIds);
+    if (profiles) profiles.forEach(p => profileMap[p.id] = p.full_name);
   }
+
+  // Zusammenführen
+  zimmerData = zimmer.map(z => ({
+    ...z,
+    zimmer_belegung: (z.zimmer_belegung||[]).map(b => ({
+      user_id: b.user_id,
+      profiles: { full_name: profileMap[b.user_id] || 'Unbekannt' }
+    }))
+  }));
   renderZimmer();
 }
 
