@@ -551,7 +551,22 @@ tr:hover td{background:#fafbfc;}
     <div class="topbar-spacer"></div>
     <div class="topbar-user">
       <div class="uname" id="app-username">Max Schneider</div>
-      <div class="avatar" id="app-avatar">MS</div>
+      <div style="position:relative;">
+        <div class="avatar" id="app-avatar" onclick="toggleAvatarMenu()" style="cursor:pointer;overflow:hidden;"></div>
+        <div id="avatar-menu" style="display:none;position:absolute;right:0;top:calc(100% + 8px);background:white;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.15);border:1px solid #e2e8f0;width:220px;z-index:999;padding:12px;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:10px;font-weight:600;">PROFILBILD ÄNDERN</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <div id="avatar-preview-img" style="width:48px;height:48px;border-radius:50%;background:#1a3a6a;color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;overflow:hidden;flex-shrink:0;"></div>
+            <div style="font-size:13px;color:#334155;" id="avatar-preview-name"></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:10px 12px;cursor:pointer;font-size:13px;font-weight:500;color:#334155;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Bild hochladen
+            <input type="file" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+          </label>
+          <div id="avatar-upload-status" style="font-size:12px;color:#64748b;margin-top:8px;text-align:center;min-height:16px;"></div>
+        </div>
+      </div>
       <div class="logout-btn" onclick="doLogout()">Abmelden</div>
     </div>
   </div>
@@ -1036,20 +1051,23 @@ async function doRegister(){
 async function enterApp(){
   if(!currentUser)return;
 
-  // ID und Rolle aus aktiver Session holen falls noch nicht gesetzt
+  // ID, Rolle und Avatar laden
   if(!currentUser.id || !currentUser.rolle){
     const { data: { session } } = await sb.auth.getSession();
     if(session?.user?.id){
       currentUser.id = session.user.id;
-      const { data: profile } = await sb.from('profiles').select('rolle').eq('id', session.user.id).single();
-      if(profile) currentUser.rolle = profile.rolle;
+      const { data: profile } = await sb.from('profiles').select('rolle, avatar_url').eq('id', session.user.id).single();
+      if(profile){
+        currentUser.rolle     = profile.rolle;
+        currentUser.avatarUrl = profile.avatar_url || null;
+      }
     }
   }
 
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-shell').classList.add('visible');
-  document.getElementById('app-username').textContent=currentUser.name;
-  document.getElementById('app-avatar').textContent=currentUser.initials;
+  document.getElementById('app-username').textContent = currentUser.name;
+  setAvatar(currentUser.avatarUrl, currentUser.initials);
   document.getElementById('dash-greeting').textContent='Hallo, '+currentUser.name.split(' ')[0]+'! ⛷️';
 
   // Lehrer-Seiten ein- oder ausblenden
@@ -1096,6 +1114,62 @@ function handleUpload(inp){
   }
 }
 
+
+/* ═══════ AVATAR ═══════ */
+function setAvatar(url, initials) {
+  const el = document.getElementById('app-avatar');
+  const preview = document.getElementById('avatar-preview-img');
+  if (url) {
+    el.innerHTML      = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;">`;
+    if (preview) preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  } else {
+    el.textContent = initials || '?';
+    if (preview) preview.textContent = initials || '?';
+  }
+}
+
+function toggleAvatarMenu() {
+  const menu = document.getElementById('avatar-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  const preview = document.getElementById('avatar-preview-img');
+  if (currentUser?.avatarUrl) {
+    preview.innerHTML = `<img src="${currentUser.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  } else {
+    preview.textContent = currentUser?.initials || '?';
+  }
+  document.getElementById('avatar-preview-name').textContent = currentUser?.name || '';
+}
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('avatar-menu');
+  if (!menu) return;
+  if (!e.target.closest('#avatar-menu') && !e.target.closest('#app-avatar')) {
+    menu.style.display = 'none';
+  }
+});
+
+async function uploadAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('avatar-upload-status');
+  status.textContent = '⏳ Wird hochgeladen...';
+  const { data: { session } } = await sb.auth.getSession();
+  const uid = session?.user?.id;
+  if (!uid) { status.textContent = '❌ Nicht eingeloggt.'; return; }
+  const ext  = file.name.split('.').pop();
+  const path = `${uid}/avatar.${ext}`;
+  const { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true });
+  if (upErr) { status.textContent = '❌ ' + upErr.message; return; }
+  const { data: { publicUrl } } = sb.storage.from('avatars').getPublicUrl(path);
+  await sb.from('profiles').update({ avatar_url: publicUrl }).eq('id', uid);
+  currentUser.avatarUrl = publicUrl;
+  setAvatar(publicUrl, currentUser.initials);
+  status.textContent = '✅ Gespeichert!';
+  setTimeout(() => {
+    document.getElementById('avatar-menu').style.display = 'none';
+    status.textContent = '';
+  }, 1500);
+}
 
 /* ═══════ GRUPPENPLANER ═══════ */
 let gruppenData = [];
