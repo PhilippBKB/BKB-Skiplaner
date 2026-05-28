@@ -658,37 +658,12 @@ tr:hover td{background:#fafbfc;}
     <div class="page" id="page-zimmer">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <div class="page-title">Zimmereinteilung</div>
-        <button class="btn btn-primary" onclick="document.getElementById('modal-zimmer').classList.add('open')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Zimmer anlegen</button>
+        <button class="btn btn-primary" id="btn-zimmer-anlegen" style="display:none;" onclick="document.getElementById('modal-zimmer').classList.add('open')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Zimmer anlegen
+        </button>
       </div>
       <div class="page-sub">Hotel Alpenstern · Sölden, Österreich</div>
-      <div class="grid3" id="rooms-grid">
-        <div class="room-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div class="room-num">Zimmer 101</div><span class="pill tag-green">3/4 belegt</span></div>
-          <div class="room-attrs"><span class="pill tag-blue">4-Bett</span><span class="pill" style="background:#fdf2f8;color:#9d174d;">Mädchen</span><span class="pill tag-amber">EG</span></div>
-          <div class="beds-row"><div class="bed-icon taken"></div><div class="bed-icon taken"></div><div class="bed-icon taken"></div><div class="bed-icon"></div></div>
-          <div class="occupant-name">Sophie L.</div><div class="occupant-name">Lena B.</div><div class="occupant-name">Anna K.</div>
-          <div class="drop-zone" style="margin-top:10px;" ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="dropRoom(event,'101')">+ Schüler zuweisen</div>
-        </div>
-        <div class="room-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div class="room-num">Zimmer 102</div><span class="pill tag-amber">2/3 belegt</span></div>
-          <div class="room-attrs"><span class="pill tag-blue">3-Bett</span><span class="pill" style="background:#eff6ff;color:#1e40af;">Jungen</span><span class="pill tag-amber">EG</span></div>
-          <div class="beds-row"><div class="bed-icon taken"></div><div class="bed-icon taken"></div><div class="bed-icon"></div></div>
-          <div class="occupant-name">Tim M.</div><div class="occupant-name">Max H.</div>
-          <div class="drop-zone" style="margin-top:10px;" ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="dropRoom(event,'102')">+ Schüler zuweisen</div>
-        </div>
-        <div class="room-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div class="room-num">Zimmer 103</div><span class="pill tag-red">0/2 belegt</span></div>
-          <div class="room-attrs"><span class="pill tag-blue">2-Bett</span><span class="pill tag-green">Gemischt</span><span class="pill" style="background:#f1f5f9;color:#475569;">1. OG</span></div>
-          <div class="beds-row"><div class="bed-icon"></div><div class="bed-icon"></div></div>
-          <div class="drop-zone" style="margin-top:10px;" ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="dropRoom(event,'103')">+ Schüler zuweisen</div>
-        </div>
-        <div class="room-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div class="room-num">Zimmer 104</div><span class="pill tag-green">4/4 belegt</span></div>
-          <div class="room-attrs"><span class="pill tag-blue">4-Bett</span><span class="pill" style="background:#eff6ff;color:#1e40af;">Jungen</span><span class="pill" style="background:#f1f5f9;color:#475569;">1. OG</span></div>
-          <div class="beds-row"><div class="bed-icon taken"></div><div class="bed-icon taken"></div><div class="bed-icon taken"></div><div class="bed-icon taken"></div></div>
-          <div class="occupant-name">Jonas K.</div><div class="occupant-name">Lukas P.</div><div class="occupant-name">Ben W.</div><div class="occupant-name">Felix R.</div>
-        </div>
-      </div>
+      <div class="grid3" id="rooms-grid"></div>
     </div>
 
     <!-- ── INFOZENTRUM ── -->
@@ -1040,11 +1015,14 @@ function enterApp(){
 
   // Lehrer-Seiten ein- oder ausblenden
   const istLehrer = currentUser.rolle === 'lehrer';
-  ['nav-gruppen','nav-zimmer','nav-anmeldung'].forEach(id=>{
+  ['nav-gruppen','nav-anmeldung'].forEach(id=>{
     const el=document.getElementById(id);
-    if(istLehrer){el.classList.add('lehrer-only','visible');}
-    else{el.classList.add('lehrer-only');}
+    el.classList.add('lehrer-only');
+    if(istLehrer) el.classList.add('visible');
+    else el.classList.remove('visible');
   });
+  // Zimmer ist für alle sichtbar
+  document.getElementById('nav-zimmer').classList.remove('lehrer-only');
 }
 
 function doLogout(){
@@ -1065,8 +1043,110 @@ function handleUpload(inp){
   }
 }
 
-/* ═══════ NAVIGATION ═══════ */
-const lehrerSeiten=['gruppen','zimmer','anmeldung'];
+/* ═══════ ZIMMER-LOGIK ═══════ */
+
+// Lokale Zimmerdaten (werden aus Supabase geladen)
+let zimmerData = [];
+
+async function ladeZimmer() {
+  const { data, error } = await sb.from('zimmer').select('*, zimmer_belegung(user_id, profiles(full_name))').order('nummer');
+  if (error || !data) {
+    // Fallback: Demo-Daten wenn Tabelle noch nicht existiert
+    zimmerData = [
+      { id: 1, nummer: '101', betten: 4, typ: 'Mädchen', etage: 'EG', zimmer_belegung: [] },
+      { id: 2, nummer: '102', betten: 3, typ: 'Jungen',  etage: 'EG', zimmer_belegung: [] },
+      { id: 3, nummer: '103', betten: 2, typ: 'Gemischt',etage: '1. OG', zimmer_belegung: [] },
+    ];
+  } else {
+    zimmerData = data;
+  }
+  renderZimmer();
+}
+
+function renderZimmer() {
+  const grid = document.getElementById('rooms-grid');
+  const istLehrer = currentUser?.rolle === 'lehrer';
+
+  // Lehrer-Button anzeigen
+  const btn = document.getElementById('btn-zimmer-anlegen');
+  if (btn) btn.style.display = istLehrer ? 'flex' : 'none';
+
+  grid.innerHTML = zimmerData.map(z => {
+    const belegt = z.zimmer_belegung ? z.zimmer_belegung.length : 0;
+    const frei   = z.betten - belegt;
+    const voll   = frei === 0;
+    const tagColor = voll ? 'tag-red' : belegt > 0 ? 'tag-amber' : 'tag-green';
+    const belegungLabel = `${belegt}/${z.betten} belegt`;
+
+    // Bett-Icons
+    const betten = Array.from({length: z.betten}, (_, i) =>
+      `<div class="bed-icon ${i < belegt ? 'taken' : ''}"></div>`
+    ).join('');
+
+    // Bewohner: Lehrer sehen Namen, Schüler nicht
+    const bewohner = istLehrer && z.zimmer_belegung
+      ? z.zimmer_belegung.map(b =>
+          `<div class="occupant-name">${b.profiles?.full_name || 'Unbekannt'}</div>`
+        ).join('')
+      : '';
+
+    // Schüler-Button: nur wenn noch Platz & noch nicht eingetragen
+    const bereitsDrin = z.zimmer_belegung?.some(b => b.user_id === currentUser?.id);
+    const schuelerBtn = !istLehrer && !voll
+      ? bereitsDrin
+        ? `<div style="margin-top:10px;font-size:12px;color:#10b981;font-weight:600;">✓ Du bist in diesem Zimmer</div>`
+        : `<button class="btn btn-primary" style="margin-top:10px;width:100%;justify-content:center;" onclick="zimmerBeitreten(${z.id})">Diesem Zimmer beitreten</button>`
+      : '';
+
+    // Lehrer: Bearbeiten-Button
+    const lehrerBtn = istLehrer
+      ? `<button class="btn" style="margin-top:10px;width:100%;justify-content:center;font-size:12px;" onclick="zimmerBearbeiten(${z.id})">✏️ Bearbeiten</button>`
+      : '';
+
+    return `
+      <div class="room-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div class="room-num">Zimmer ${z.nummer}</div>
+          <span class="pill ${tagColor}">${belegungLabel}</span>
+        </div>
+        <div class="room-attrs">
+          <span class="pill tag-blue">${z.betten}-Bett</span>
+          <span class="pill" style="background:#f1f5f9;color:#475569;">${z.typ}</span>
+          <span class="pill" style="background:#f1f5f9;color:#475569;">${z.etage}</span>
+        </div>
+        <div class="beds-row">${betten}</div>
+        ${bewohner}
+        ${schuelerBtn}
+        ${lehrerBtn}
+      </div>`;
+  }).join('');
+}
+
+async function zimmerBeitreten(zimmerId) {
+  // Zuerst aus altem Zimmer austragen
+  await sb.from('zimmer_belegung').delete().eq('user_id', currentUser.id);
+  // In neues Zimmer eintragen
+  const { error } = await sb.from('zimmer_belegung').insert({ zimmer_id: zimmerId, user_id: currentUser.id });
+  if (error) { showToast('Fehler: ' + error.message); return; }
+  showToast('✅ Erfolgreich eingetragen!');
+  ladeZimmer();
+}
+
+function zimmerBearbeiten(zimmerId) {
+  const z = zimmerData.find(r => r.id === zimmerId);
+  if (!z) return;
+  document.getElementById('new-room-num').value   = z.nummer;
+  document.getElementById('new-room-beds').value  = z.betten;
+  document.getElementById('new-room-type').value  = z.typ   || 'Gemischt';
+  document.getElementById('new-room-floor').value = z.etage || 'EG';
+  // Speichern-Button auf Update umschalten
+  const modal = document.getElementById('modal-zimmer');
+  modal._editId = zimmerId;
+  modal.classList.add('open');
+}
+
+
+const lehrerSeiten=['gruppen','anmeldung'];
 function showPage(name,el){
   if(lehrerSeiten.includes(name) && currentUser?.rolle !== 'lehrer'){
     showToast('🔒 Diese Seite ist nur für Lehrer zugänglich.');
@@ -1076,6 +1156,7 @@ function showPage(name,el){
   document.getElementById('page-'+name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
+  if(name === 'zimmer') ladeZimmer();
 }
 
 /* ═══════ DRAG & DROP ═══════ */
@@ -1139,16 +1220,29 @@ function removeChip(btn,teacher,initials,name,info,bg,col){
 }
 
 /* ═══════ ZIMMER ═══════ */
-function addRoom(){
-  const num=document.getElementById('new-room-num').value||'105';
-  const beds=document.getElementById('new-room-beds').value;
-  const count=parseInt(beds);
-  const icons=Array.from({length:count},()=>'<div class="bed-icon"></div>').join('');
-  const c=document.createElement('div');c.className='room-card';
-  c.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div class="room-num">Zimmer ${num}</div><span class="pill tag-red">0/${count} belegt</span></div><div class="room-attrs"><span class="pill tag-blue">${beds}</span><span class="pill tag-green">Gemischt</span></div><div class="beds-row">${icons}</div><div class="drop-zone" style="margin-top:10px;" ondragover="onOver(event)" ondragleave="onLeave(event)" ondrop="dropRoom(event,'${num}')">+ Schüler zuweisen</div>`;
-  document.getElementById('rooms-grid').appendChild(c);
-  document.getElementById('modal-zimmer').classList.remove('open');
-  showToast('Zimmer '+num+' wurde angelegt!');
+async function addRoom(){
+  const num   = document.getElementById('new-room-num').value.trim() || '105';
+  const beds  = parseInt(document.getElementById('new-room-beds').value);
+  const typ   = document.getElementById('new-room-type')?.value  || 'Gemischt';
+  const etage = document.getElementById('new-room-floor')?.value || 'EG';
+  const modal = document.getElementById('modal-zimmer');
+  const editId = modal._editId || null;
+
+  if (editId) {
+    // Update bestehendes Zimmer
+    const { error } = await sb.from('zimmer').update({ nummer: num, betten: beds, typ, etage }).eq('id', editId);
+    if (error) { showToast('Fehler: ' + error.message); return; }
+    showToast('Zimmer ' + num + ' wurde aktualisiert!');
+  } else {
+    // Neues Zimmer anlegen
+    const { error } = await sb.from('zimmer').insert({ nummer: num, betten: beds, typ, etage });
+    if (error) { showToast('Fehler: ' + error.message); return; }
+    showToast('Zimmer ' + num + ' wurde angelegt!');
+  }
+
+  modal._editId = null;
+  modal.classList.remove('open');
+  ladeZimmer();
 }
 
 /* ═══════ SUCHE ═══════ */
