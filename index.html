@@ -1006,14 +1006,19 @@ async function doRegister(){
   document.getElementById('view-success').style.display='block';
 }
 
-function enterApp(){
+async function enterApp(){
   if(!currentUser)return;
-  // ID aus aktiver Session holen falls noch nicht gesetzt
-  if(!currentUser.id){
-    sb.auth.getSession().then(({data:{session}})=>{
-      if(session?.user?.id) currentUser.id = session.user.id;
-    });
+
+  // ID und Rolle aus aktiver Session holen falls noch nicht gesetzt
+  if(!currentUser.id || !currentUser.rolle){
+    const { data: { session } } = await sb.auth.getSession();
+    if(session?.user?.id){
+      currentUser.id = session.user.id;
+      const { data: profile } = await sb.from('profiles').select('rolle').eq('id', session.user.id).single();
+      if(profile) currentUser.rolle = profile.rolle;
+    }
   }
+
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-shell').classList.add('visible');
   document.getElementById('app-username').textContent=currentUser.name;
