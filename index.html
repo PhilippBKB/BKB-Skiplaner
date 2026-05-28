@@ -1123,8 +1123,11 @@ function renderZimmer() {
 }
 
 async function zimmerBeitreten(zimmerId) {
-  // Zuerst aus altem Zimmer austragen
-  await sb.from('zimmer_belegung').delete().eq('user_id', currentUser.id);
+  // Erst prüfen ob bereits ein Eintrag existiert, dann löschen
+  const { data: existing } = await sb.from('zimmer_belegung').select('id').eq('user_id', currentUser.id);
+  if (existing && existing.length > 0) {
+    await sb.from('zimmer_belegung').delete().eq('user_id', currentUser.id);
+  }
   // In neues Zimmer eintragen
   const { error } = await sb.from('zimmer_belegung').insert({ zimmer_id: zimmerId, user_id: currentUser.id });
   if (error) { showToast('Fehler: ' + error.message); return; }
