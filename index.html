@@ -636,7 +636,7 @@ tr:hover td{background:#fafbfc;}
           <div class="stat-val" id="stat-gruppen">–</div>
           <span class="stat-tag tag-blue" id="stat-gruppen-tag">wird geladen...</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" id="stat-card-offen" style="display:none;">
           <div class="stat-label">Nicht eingeteilt</div>
           <div class="stat-val" id="stat-offen" style="color:var(--danger);">–</div>
           <span class="stat-tag tag-red" id="stat-offen-tag">wird geladen...</span>
@@ -1255,6 +1255,7 @@ async function ladeDashboard() {
   document.getElementById('stat-offen').textContent        = nichtEingeteilt;
   document.getElementById('stat-offen-tag').textContent    = nichtEingeteilt === 0 ? 'Alle eingeteilt ✓' : 'brauchen Gruppe';
   document.getElementById('stat-offen').style.color        = nichtEingeteilt === 0 ? 'var(--success)' : 'var(--danger)';
+  if (currentUser?.rolle === 'lehrer') document.getElementById('stat-card-offen').style.display = 'block';
   document.getElementById('dash-days-text').textContent    = document.getElementById('cd-days').textContent;
 
   const uid = currentUser?.id;
