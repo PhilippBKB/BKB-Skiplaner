@@ -1876,7 +1876,8 @@ async function wechsleChat(ziel, el) {
 }
 
 async function ladeNachrichten() {
-  let query = sb.from('nachrichten').select('*, profiles(full_name, avatar_url)').order('created_at');
+  // Schritt 1: Nachrichten laden
+  let query = sb.from('nachrichten').select('id, inhalt, sender_id, empfaenger_id, created_at').order('created_at');
 
   if (aktiverChat === 'global') {
     query = query.is('empfaenger_id', null);
@@ -1886,8 +1887,22 @@ async function ladeNachrichten() {
     );
   }
 
-  const { data } = await query;
-  renderNachrichten(data || []);
+  const { data: msgs } = await query;
+  if (!msgs || msgs.length === 0) { renderNachrichten([]); return; }
+
+  // Schritt 2: Profile separat laden
+  const uids = [...new Set(msgs.map(m => m.sender_id).filter(Boolean))];
+  const { data: profiles } = await sb.from('profiles').select('id, full_name, avatar_url').in('id', uids);
+  const profileMap = {};
+  (profiles || []).forEach(p => profileMap[p.id] = p);
+
+  // Zusammenführen
+  const combined = msgs.map(m => ({
+    ...m,
+    profiles: profileMap[m.sender_id] || { full_name: 'Unbekannt', avatar_url: null }
+  }));
+
+  renderNachrichten(combined);
 }
 
 function renderNachrichten(msgs) {
