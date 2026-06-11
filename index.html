@@ -712,56 +712,51 @@ tr:hover td{background:#fafbfc;}
     <div class="page" id="page-info">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <div class="page-title">Infozentrum</div>
-        <button class="btn btn-primary" onclick="showToast('Neue Mitteilung erstellt!')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Hinzufügen</button>
+        <button class="btn btn-primary" id="btn-beitrag-neu" style="display:none;" onclick="document.getElementById('modal-info').classList.add('open')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Beitrag erstellen
+        </button>
       </div>
       <div class="page-sub">Wichtige Mitteilungen und Dokumente für alle Teilnehmer.</div>
-      <div class="grid2">
-        <div class="card">
-          <div class="card-title">Mitteilungen</div>
-          <div class="info-item">
-            <div class="info-icon-box" style="background:#eff6ff;color:#1d4ed8;"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
-            <div style="flex:1;"><div class="info-title">Abfahrt: 15. Feb. um 06:00 Uhr</div><div class="info-meta">Treffpunkt Schulhof · 12. Feb.</div></div>
-            <span class="pill tag-blue" style="flex-shrink:0;">Neu</span>
-          </div>
-          <div class="info-item">
-            <div class="info-icon-box" style="background:#fffbeb;color:#92400e;"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-            <div><div class="info-title">Helmpflicht auf allen Pisten!</div><div class="info-meta">Pflichtausrüstung · 10. Feb.</div></div>
-          </div>
-          <div class="info-item">
-            <div class="info-icon-box" style="background:#ecfdf5;color:#065f46;"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-            <div><div class="info-title">Apres-Ski-Abend geplant</div><div class="info-meta">Freitag, 20. Feb. ab 18:00</div></div>
-          </div>
-          <div class="info-item">
-            <div class="info-icon-box" style="background:#f3e8ff;color:#6b21a8;"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-            <div><div class="info-title">Wochenprogramm veröffentlicht</div><div class="info-meta">5. Feb.</div></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Dokumente</div>
-          <div class="doc-item" onclick="showToast('Packliste wird heruntergeladen...')">
-            <div class="doc-ext" style="background:#fef2f2;color:#991b1b;">PDF</div>
-            <div style="flex:1;"><div class="doc-name">Packliste_Skifahrt.pdf</div><div class="doc-size">245 KB · 10. Feb.</div></div>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          </div>
-          <div class="doc-item" onclick="showToast('Einverständnis wird heruntergeladen...')">
-            <div class="doc-ext" style="background:#eff6ff;color:#1d4ed8;">DOC</div>
-            <div style="flex:1;"><div class="doc-name">Einverständniserklärung.docx</div><div class="doc-size">88 KB · 8. Feb.</div></div>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          </div>
-          <div class="doc-item" onclick="showToast('Programm wird heruntergeladen...')">
-            <div class="doc-ext" style="background:#ecfdf5;color:#065f46;">XLS</div>
-            <div style="flex:1;"><div class="doc-name">Wochenprogramm.xlsx</div><div class="doc-size">120 KB · 5. Feb.</div></div>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          </div>
-          <div class="doc-item" onclick="showToast('Notfallkontakte wird heruntergeladen...')">
-            <div class="doc-ext" style="background:#fffbeb;color:#92400e;">PDF</div>
-            <div style="flex:1;"><div class="doc-name">Notfallkontakte.pdf</div><div class="doc-size">54 KB · 3. Feb.</div></div>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          </div>
-        </div>
+      <div id="info-feed" style="display:flex;flex-direction:column;gap:16px;">
+        <div style="color:var(--muted);font-size:14px;padding:20px;text-align:center;">Lade Beiträge...</div>
       </div>
     </div>
 
+    <!-- ── MODAL INFOBEITRAG ── -->
+    <div class="modal-overlay" id="modal-info">
+      <div class="modal-box" style="max-width:540px;">
+        <div class="modal-title">Neuer Beitrag</div>
+        <div class="fgroup">
+          <label class="flabel">Titel</label>
+          <input class="finput" id="info-titel" placeholder="z.B. Abfahrt morgen früh um 06:00 Uhr">
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Inhalt</label>
+          <textarea class="finput" id="info-inhalt" rows="4" style="resize:vertical;" placeholder="Schreibe hier deine Mitteilung..."></textarea>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Bild (optional)</label>
+          <label style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:10px 12px;cursor:pointer;font-size:13px;font-weight:500;color:#334155;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span id="info-bild-label">Bild auswählen...</span>
+            <input type="file" accept="image/*" style="display:none;" onchange="infoDateiGewaehlt(this,'bild')">
+          </label>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Anhang (optional)</label>
+          <label style="display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:10px;padding:10px 12px;cursor:pointer;font-size:13px;font-weight:500;color:#334155;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span id="info-anhang-label">Datei auswählen (PDF, Word, Excel...)</span>
+            <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" style="display:none;" onchange="infoDateiGewaehlt(this,'anhang')">
+          </label>
+        </div>
+        <div id="info-upload-status" style="font-size:12px;color:#64748b;min-height:16px;text-align:center;"></div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="btn" style="flex:1;" onclick="document.getElementById('modal-info').classList.remove('open')">Abbrechen</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="beitragErstellen()">Veröffentlichen</button>
+        </div>
+      </div>
+    </div>
     <!-- ── ANMELDELISTE ── -->
     <div class="page" id="page-anmeldung">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -1117,6 +1112,7 @@ function showPage(name,el){
   el.classList.add('active');
   if(name === 'zimmer') ladeZimmer();
   if(name === 'gruppen') ladeGruppen();
+  if(name === 'info') ladeInfobeitraege();
 }
 
 function doLogout(){
@@ -1192,6 +1188,138 @@ async function uploadAvatar(input) {
     document.getElementById('avatar-menu').style.display = 'none';
     status.textContent = '';
   }, 1500);
+}
+
+/* ═══════ INFOZENTRUM ═══════ */
+let infoBildFile   = null;
+let infoAnhangFile = null;
+
+function infoDateiGewaehlt(input, typ) {
+  const file = input.files[0];
+  if (!file) return;
+  if (typ === 'bild') {
+    infoBildFile = file;
+    document.getElementById('info-bild-label').textContent = '✓ ' + file.name;
+  } else {
+    infoAnhangFile = file;
+    document.getElementById('info-anhang-label').textContent = '✓ ' + file.name;
+  }
+}
+
+async function ladeInfobeitraege() {
+  const istLehrer = currentUser?.rolle === 'lehrer';
+  const btn = document.getElementById('btn-beitrag-neu');
+  if (btn) btn.style.display = istLehrer ? 'flex' : 'none';
+
+  const { data, error } = await sb.from('infobeitraege')
+    .select('*, profiles(full_name, avatar_url)')
+    .order('created_at', { ascending: false });
+
+  const feed = document.getElementById('info-feed');
+  if (error || !data || data.length === 0) {
+    feed.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:40px;text-align:center;">Noch keine Beiträge vorhanden.</div>';
+    return;
+  }
+
+  feed.innerHTML = data.map(b => {
+    const datum = new Date(b.created_at).toLocaleDateString('de-DE', { day:'2-digit', month:'short', year:'numeric' });
+    const autorName = b.profiles?.full_name || 'Unbekannt';
+    const autorIni  = autorName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const autorAvatar = b.profiles?.avatar_url
+      ? `<img src="${b.profiles.avatar_url}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">`
+      : `<div style="width:36px;height:36px;border-radius:50%;background:#1a3a6a;color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">${autorIni}</div>`;
+
+    const bildHTML = b.bild_url
+      ? `<img src="${b.bild_url}" style="width:100%;border-radius:12px;margin:12px 0;max-height:300px;object-fit:cover;">`
+      : '';
+
+    const ext = b.anhang_name ? b.anhang_name.split('.').pop().toUpperCase() : '';
+    const extColor = ext==='PDF' ? '#fef2f2;color:#991b1b' : ext.includes('DOC') ? '#eff6ff;color:#1d4ed8' : ext.includes('XLS') ? '#ecfdf5;color:#065f46' : '#f1f5f9;color:#475569';
+    const anhangHTML = b.anhang_url
+      ? `<a href="${b.anhang_url}" target="_blank" style="display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;text-decoration:none;color:#334155;margin-top:10px;">
+          <div style="background:${extColor};padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;">${ext}</div>
+          <div style="flex:1;font-size:13px;font-weight:500;">${b.anhang_name}</div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </a>`
+      : '';
+
+    const loeschenBtn = istLehrer
+      ? `<button onclick="beitragLoeschen(${b.id})" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:12px;padding:4px 8px;border-radius:6px;" title="Löschen">🗑️</button>`
+      : '';
+
+    return `<div class="card" style="padding:20px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        ${autorAvatar}
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:14px;color:#1e293b;">${autorName}</div>
+          <div style="font-size:12px;color:#94a3b8;">${datum}</div>
+        </div>
+        ${loeschenBtn}
+      </div>
+      <div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:6px;">${b.titel}</div>
+      <div style="font-size:14px;color:#475569;line-height:1.6;white-space:pre-wrap;">${b.inhalt}</div>
+      ${bildHTML}
+      ${anhangHTML}
+    </div>`;
+  }).join('');
+}
+
+async function beitragErstellen() {
+  const titel  = document.getElementById('info-titel').value.trim();
+  const inhalt = document.getElementById('info-inhalt').value.trim();
+  if (!titel || !inhalt) { showToast('Bitte Titel und Inhalt ausfüllen.'); return; }
+
+  const status = document.getElementById('info-upload-status');
+  status.textContent = '⏳ Wird veröffentlicht...';
+
+  const { data: { session } } = await sb.auth.getSession();
+  const uid = session?.user?.id;
+  let bild_url = null, anhang_url = null, anhang_name = null;
+
+  // Bild hochladen
+  if (infoBildFile) {
+    const path = `bilder/${uid}_${Date.now()}.${infoBildFile.name.split('.').pop()}`;
+    const { error } = await sb.storage.from('infobeitraege').upload(path, infoBildFile);
+    if (!error) {
+      const { data: { publicUrl } } = sb.storage.from('infobeitraege').getPublicUrl(path);
+      bild_url = publicUrl;
+    }
+  }
+
+  // Anhang hochladen
+  if (infoAnhangFile) {
+    const path = `anhaenge/${uid}_${Date.now()}_${infoAnhangFile.name}`;
+    const { error } = await sb.storage.from('infobeitraege').upload(path, infoAnhangFile);
+    if (!error) {
+      const { data: { publicUrl } } = sb.storage.from('infobeitraege').getPublicUrl(path);
+      anhang_url  = publicUrl;
+      anhang_name = infoAnhangFile.name;
+    }
+  }
+
+  const { error } = await sb.from('infobeitraege').insert({
+    titel, inhalt, autor_id: uid, bild_url, anhang_url, anhang_name
+  });
+
+  if (error) { status.textContent = '❌ ' + error.message; return; }
+
+  // Reset
+  document.getElementById('info-titel').value  = '';
+  document.getElementById('info-inhalt').value = '';
+  document.getElementById('info-bild-label').textContent   = 'Bild auswählen...';
+  document.getElementById('info-anhang-label').textContent = 'Datei auswählen (PDF, Word, Excel...)';
+  infoBildFile = null; infoAnhangFile = null;
+  status.textContent = '';
+  document.getElementById('modal-info').classList.remove('open');
+  showToast('✅ Beitrag veröffentlicht!');
+  ladeInfobeitraege();
+}
+
+async function beitragLoeschen(id) {
+  if (!confirm('Beitrag wirklich löschen?')) return;
+  await sb.from('infobeitraege').delete().eq('id', id);
+  showToast('Beitrag gelöscht.');
+  ladeInfobeitraege();
 }
 
 /* ═══════ ZIMMER ═══════ */
