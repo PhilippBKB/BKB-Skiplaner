@@ -610,33 +610,57 @@ tr:hover td{background:#fafbfc;}
     <!-- ── DASHBOARD ── -->
     <div class="page active" id="page-dashboard">
       <div class="dash-hero">
-        <div class="dash-hero-title" id="dash-greeting">Guten Morgen! ⛷️</div>
-        <div class="dash-hero-sub">Noch 18 Tage bis zur Skifahrt nach Sölden.</div>
+        <div class="dash-hero-title" id="dash-greeting">Hallo! ⛷️</div>
+        <div class="dash-hero-sub">Noch <span id="dash-days-text">...</span> Tage bis zur Skifahrt nach Sölden.</div>
         <div class="countdown-row">
-          <div class="countdown-box"><div class="countdown-num" id="cd-days">18</div><div class="countdown-lbl">Tage</div></div>
-          <div class="countdown-box"><div class="countdown-num" id="cd-hours">06</div><div class="countdown-lbl">Std.</div></div>
-          <div class="countdown-box"><div class="countdown-num" id="cd-mins">24</div><div class="countdown-lbl">Min.</div></div>
+          <div class="countdown-box"><div class="countdown-num" id="cd-days">--</div><div class="countdown-lbl">Tage</div></div>
+          <div class="countdown-box"><div class="countdown-num" id="cd-hours">--</div><div class="countdown-lbl">Std.</div></div>
+          <div class="countdown-box"><div class="countdown-num" id="cd-mins">--</div><div class="countdown-lbl">Min.</div></div>
         </div>
       </div>
+
+      <!-- Statistiken -->
       <div class="grid4" style="margin-bottom:20px;">
-        <div class="stat-card"><div class="stat-label">Angemeldete Schüler</div><div class="stat-val">42</div><span class="stat-tag tag-green">von 48 gesamt</span></div>
-        <div class="stat-card"><div class="stat-label">Skilehrer</div><div class="stat-val">6</div><span class="stat-tag tag-blue">4 Ski · 2 Snowboard</span></div>
-        <div class="stat-card"><div class="stat-label">Zimmer belegt</div><div class="stat-val">8/12</div><span class="stat-tag tag-amber">4 noch frei</span></div>
-        <div class="stat-card"><div class="stat-label">Nicht eingeteilt</div><div class="stat-val" style="color:var(--danger);">5</div><span class="stat-tag tag-red">brauchen Gruppe</span></div>
+        <div class="stat-card">
+          <div class="stat-label">Schüler</div>
+          <div class="stat-val" id="stat-schueler">–</div>
+          <span class="stat-tag tag-green" id="stat-schueler-tag">wird geladen...</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Zimmer belegt</div>
+          <div class="stat-val" id="stat-zimmer">–</div>
+          <span class="stat-tag tag-amber" id="stat-zimmer-tag">wird geladen...</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Skigruppen</div>
+          <div class="stat-val" id="stat-gruppen">–</div>
+          <span class="stat-tag tag-blue" id="stat-gruppen-tag">wird geladen...</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Nicht eingeteilt</div>
+          <div class="stat-val" id="stat-offen" style="color:var(--danger);">–</div>
+          <span class="stat-tag tag-red" id="stat-offen-tag">wird geladen...</span>
+        </div>
       </div>
+
+      <!-- Persönliche Infos -->
       <div class="grid2">
         <div class="card">
-          <div class="card-title">Fortschritt</div>
-          <div class="progress-row"><div class="progress-label">Gruppenplanung</div><div class="progress-bar"><div class="progress-fill" style="width:88%"></div></div><div class="progress-val">88%</div></div>
-          <div class="progress-row"><div class="progress-label">Zimmereinteilung</div><div class="progress-bar"><div class="progress-fill" style="width:67%;background:#10b981"></div></div><div class="progress-val">67%</div></div>
-          <div class="progress-row"><div class="progress-label">Anmeldungen</div><div class="progress-bar"><div class="progress-fill" style="width:75%;background:#f59e0b"></div></div><div class="progress-val">75%</div></div>
+          <div class="card-title">Meine Einteilung</div>
+          <div id="dash-mein-zimmer" style="margin-bottom:14px;">
+            <div style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Zimmer</div>
+            <div id="dash-zimmer-info" style="font-size:15px;color:var(--text);">Wird geladen...</div>
+          </div>
+          <div id="dash-meine-gruppe">
+            <div style="font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Skigruppe</div>
+            <div id="dash-gruppe-info" style="font-size:15px;color:var(--text);">Wird geladen...</div>
+          </div>
         </div>
         <div class="card">
-          <div class="card-title">Letzte Aktivitäten</div>
-          <div class="activity-item"><div class="activity-dot" style="background:#10b981"></div><div class="activity-text">Anna K. hat sich angemeldet</div><div class="activity-time">Vor 2 Std.</div></div>
-          <div class="activity-item"><div class="activity-dot" style="background:#3b82f6"></div><div class="activity-text">Zimmer 103 wurde belegt</div><div class="activity-time">Vor 4 Std.</div></div>
-          <div class="activity-item"><div class="activity-dot" style="background:#f59e0b"></div><div class="activity-text">Neue Mitteilung: Packliste</div><div class="activity-time">Gestern</div></div>
-          <div class="activity-item"><div class="activity-dot" style="background:#8b5cf6"></div><div class="activity-text">Tim M. wurde Gruppe Richter zugewiesen</div><div class="activity-time">Gestern</div></div>
+          <div class="card-title">Neueste Mitteilung</div>
+          <div id="dash-letzte-info">
+            <div style="color:var(--muted);font-size:14px;">Wird geladen...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -1101,6 +1125,9 @@ async function enterApp(){
   });
   // Zimmer ist für alle sichtbar
   document.getElementById('nav-zimmer').classList.remove('lehrer-only');
+
+  // Dashboard beim Start laden
+  ladeDashboard();
 }
 
 const lehrerSeiten=['gruppen','anmeldung'];
@@ -1113,6 +1140,7 @@ function showPage(name,el){
   document.getElementById('page-'+name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
+  if(name === 'dashboard') ladeDashboard();
   if(name === 'zimmer') ladeZimmer();
   if(name === 'gruppen') ladeGruppen();
   if(name === 'info') ladeInfobeitraege();
@@ -1191,6 +1219,82 @@ async function uploadAvatar(input) {
     document.getElementById('avatar-menu').style.display = 'none';
     status.textContent = '';
   }, 1500);
+}
+
+/* ═══════ DASHBOARD ═══════ */
+async function ladeDashboard() {
+  const [
+    { data: alleProfile },
+    { data: alleZimmer },
+    { data: belegungen },
+    { data: alleGruppen },
+    { data: gruppenMitglieder },
+    { data: letzterBeitrag }
+  ] = await Promise.all([
+    sb.from('profiles').select('id, rolle'),
+    sb.from('zimmer').select('id, nummer, betten, typ, etage'),
+    sb.from('zimmer_belegung').select('zimmer_id, user_id'),
+    sb.from('gruppen').select('id, name, skilehrer, niveau, farbe'),
+    sb.from('gruppen_mitglieder').select('gruppe_id, user_id'),
+    sb.from('infobeitraege').select('titel, inhalt, created_at').order('created_at', {ascending:false}).limit(1)
+  ]);
+
+  const schueler      = (alleProfile||[]).filter(p => p.rolle !== 'lehrer');
+  const zimmerBelegt  = new Set((belegungen||[]).map(b => b.zimmer_id)).size;
+  const zimmerGesamt  = (alleZimmer||[]).length;
+  const gruppenAnzahl = (alleGruppen||[]).length;
+  const eingeteilt    = new Set((gruppenMitglieder||[]).map(m => m.user_id)).size;
+  const nichtEingeteilt = Math.max(0, schueler.length - eingeteilt);
+
+  document.getElementById('stat-schueler').textContent     = schueler.length;
+  document.getElementById('stat-schueler-tag').textContent = schueler.length + ' registriert';
+  document.getElementById('stat-zimmer').textContent       = zimmerBelegt + '/' + zimmerGesamt;
+  document.getElementById('stat-zimmer-tag').textContent   = (zimmerGesamt - zimmerBelegt) + ' noch frei';
+  document.getElementById('stat-gruppen').textContent      = gruppenAnzahl;
+  document.getElementById('stat-gruppen-tag').textContent  = gruppenAnzahl + ' Gruppe(n) angelegt';
+  document.getElementById('stat-offen').textContent        = nichtEingeteilt;
+  document.getElementById('stat-offen-tag').textContent    = nichtEingeteilt === 0 ? 'Alle eingeteilt ✓' : 'brauchen Gruppe';
+  document.getElementById('stat-offen').style.color        = nichtEingeteilt === 0 ? 'var(--success)' : 'var(--danger)';
+  document.getElementById('dash-days-text').textContent    = document.getElementById('cd-days').textContent;
+
+  const uid = currentUser?.id;
+
+  // Mein Zimmer
+  const meinZimmer = (belegungen||[]).find(b => b.user_id === uid);
+  const zimmerEl   = document.getElementById('dash-zimmer-info');
+  if (meinZimmer) {
+    const z = (alleZimmer||[]).find(z => z.id === meinZimmer.zimmer_id);
+    zimmerEl.innerHTML = z
+      ? `<span style="font-weight:700;color:var(--accent);">Zimmer ${z.nummer}</span> <span style="color:var(--muted);font-size:13px;">${z.typ} · ${z.etage}</span>`
+      : '–';
+  } else {
+    zimmerEl.innerHTML = `<span style="color:var(--muted);">Noch kein Zimmer gewählt</span>`;
+  }
+
+  // Meine Gruppe
+  const meineMitgliedschaft = (gruppenMitglieder||[]).find(m => m.user_id === uid);
+  const gruppeEl = document.getElementById('dash-gruppe-info');
+  if (meineMitgliedschaft) {
+    const g = (alleGruppen||[]).find(g => g.id === meineMitgliedschaft.gruppe_id);
+    gruppeEl.innerHTML = g
+      ? `<span style="font-weight:700;color:${g.farbe};">⛷ ${g.name}</span> <span style="color:var(--muted);font-size:13px;">· ${g.skilehrer} · ${g.niveau}</span>`
+      : '–';
+  } else {
+    gruppeEl.innerHTML = `<span style="color:var(--muted);">Noch keiner Gruppe zugeteilt</span>`;
+  }
+
+  // Letzter Infobeitrag
+  const infoEl = document.getElementById('dash-letzte-info');
+  if (letzterBeitrag && letzterBeitrag.length > 0) {
+    const b = letzterBeitrag[0];
+    const datum = new Date(b.created_at).toLocaleDateString('de-DE', {day:'2-digit', month:'short'});
+    infoEl.innerHTML = `
+      <div style="font-weight:600;font-size:14px;color:var(--text);margin-bottom:4px;">${b.titel}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${b.inhalt}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;">${datum}</div>`;
+  } else {
+    infoEl.innerHTML = '<div style="color:var(--muted);font-size:14px;">Noch keine Mitteilungen vorhanden.</div>';
+  }
 }
 
 /* ═══════ INFOZENTRUM ═══════ */
