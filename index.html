@@ -1859,17 +1859,20 @@ async function wechsleChat(ziel, el) {
   await ladeNachrichten();
 
   // Realtime-Abo
-  chatAbo = sb.channel('chat-' + ziel)
+  chatAbo = sb.channel('chat-realtime-' + ziel)
     .on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
       table: 'nachrichten'
     }, payload => {
       const msg = payload.new;
-      const istGlobal   = aktiverChat === 'global' && !msg.empfaenger_id;
-      const istPrivat   = aktiverChat !== 'global' &&
-        ((msg.sender_id === currentUser?.id && msg.empfaenger_id === aktiverChat) ||
-         (msg.sender_id === aktiverChat     && msg.empfaenger_id === currentUser?.id));
+      const mich  = currentUser?.id;
+      const ander = aktiverChat;
+      const istGlobal = ander === 'global' && !msg.empfaenger_id;
+      const istPrivat = ander !== 'global' && (
+        (msg.sender_id === mich  && msg.empfaenger_id === ander) ||
+        (msg.sender_id === ander && msg.empfaenger_id === mich)
+      );
       if (istGlobal || istPrivat) ladeNachrichten();
     })
     .subscribe();
@@ -1882,8 +1885,10 @@ async function ladeNachrichten() {
   if (aktiverChat === 'global') {
     query = query.is('empfaenger_id', null);
   } else {
+    const mich  = currentUser.id;
+    const ander = aktiverChat;
     query = query.or(
-      `and(sender_id.eq.${currentUser.id},empfaenger_id.eq.${aktiverChat}),and(sender_id.eq.${aktiverChat},empfaenger_id.eq.${currentUser.id})`
+      `and(sender_id.eq.${mich},empfaenger_id.eq.${ander}),and(sender_id.eq.${ander},empfaenger_id.eq.${mich})`
     );
   }
 
@@ -1953,7 +1958,8 @@ async function sendeNachricht() {
   const { error } = await sb.from('nachrichten').insert(msg);
   if (error) { showToast('Fehler: ' + error.message); return; }
   inp.value = '';
-  ladeNachrichten();
+  inp.focus();
+  await ladeNachrichten();
 }
 
 /* ═══════ TOAST ═══════ */
