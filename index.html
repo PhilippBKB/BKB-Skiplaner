@@ -1194,6 +1194,119 @@ async function uploadAvatar(input) {
   }, 1500);
 }
 
+/* ═══════ ZIMMER ═══════ */
+let zimmerData = [];
+
+async function ladeZimmer() {
+  const { data: zimmer, error } = await sb.from('zimmer').select('*, zimmer_belegung(user_id)').order('nummer');
+  if (error || !zimmer) { zimmerData = []; renderZimmer(); return; }
+  const alleUserIds = [...new Set(zimmer.flatMap(z => (z.zimmer_belegung||[]).map(b => b.user_id).filter(Boolean)))];
+  let profileMap = {};
+  if (alleUserIds.length > 0) {
+    const { data: profiles } = await sb.from('profiles').select('id, full_name, avatar_url').in('id', alleUserIds);
+    if (profiles) profiles.forEach(p => profileMap[p.id] = { name: p.full_name, avatar_url: p.avatar_url });
+  }
+  zimmerData = zimmer.map(z => ({
+    ...z,
+    zimmer_belegung: (z.zimmer_belegung||[]).map(b => ({
+      user_id: b.user_id,
+      profiles: profileMap[b.user_id] || { name: 'Unbekannt', avatar_url: null }
+    }))
+  }));
+  renderZimmer();
+}
+
+function renderZimmer() {
+  const grid = document.getElementById('rooms-grid');
+  const istLehrer = currentUser?.rolle === 'lehrer';
+  const btn = document.getElementById('btn-zimmer-anlegen');
+  if (btn) btn.style.display = istLehrer ? 'flex' : 'none';
+  grid.innerHTML = zimmerData.map(z => {
+    const belegt = z.zimmer_belegung ? z.zimmer_belegung.length : 0;
+    const frei   = z.betten - belegt;
+    const voll   = frei === 0;
+    const tagColor = voll ? 'tag-red' : belegt > 0 ? 'tag-amber' : 'tag-green';
+    const betten = Array.from({length: z.betten}, (_, i) =>
+      `<div class="bed-icon ${i < belegt ? 'taken' : ''}"></div>`).join('');
+    const bewohner = istLehrer && z.zimmer_belegung
+      ? z.zimmer_belegung.map(b => {
+          const avatarHTML = b.profiles.avatar_url
+            ? `<img src="${b.profiles.avatar_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:6px;vertical-align:middle;">`
+            : '';
+          return `<div class="occupant-name">${avatarHTML}${b.profiles.name}</div>`;
+        }).join('')
+      : '';
+    const bereitsDrin = z.zimmer_belegung?.some(b => b.user_id && currentUser?.id && b.user_id === currentUser.id);
+    const schuelerBtn = !istLehrer && !voll
+      ? bereitsDrin
+        ? `<div style="margin-top:10px;font-size:12px;color:#10b981;font-weight:600;">✓ Du bist in diesem Zimmer</div>`
+        : `<button class="btn btn-primary" style="margin-top:10px;width:100%;justify-content:center;" onclick="zimmerBeitreten(${z.id})">Diesem Zimmer beitreten</button>`
+      : '';
+    const lehrerBtn = istLehrer
+      ? `<button class="btn" style="margin-top:10px;width:100%;justify-content:center;font-size:12px;" onclick="zimmerBearbeiten(${z.id})">✏️ Bearbeiten</button>`
+      : '';
+    return `<div class="room-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div class="room-num">Zimmer ${z.nummer}</div>
+        <span class="pill ${tagColor}">${belegt}/${z.betten} belegt</span>
+      </div>
+      <div class="room-attrs">
+        <span class="pill tag-blue">${z.betten}-Bett</span>
+        <span class="pill" style="background:#f1f5f9;color:#475569;">${z.typ}</span>
+        <span class="pill" style="background:#f1f5f9;color:#475569;">${z.etage}</span>
+      </div>
+      <div class="beds-row">${betten}</div>
+      ${bewohner}${schuelerBtn}${lehrerBtn}
+    </div>`;
+  }).join('');
+}
+
+async function zimmerBeitreten(zimmerId) {
+  const { data: { session } } = await sb.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) { showToast('Fehler: Nicht eingeloggt.'); return; }
+  const { data: existing } = await sb.from('zimmer_belegung').select('id').eq('user_id', userId);
+  if (existing && existing.length > 0) await sb.from('zimmer_belegung').delete().eq('user_id', userId);
+  const { error } = await sb.from('zimmer_belegung').insert({ zimmer_id: zimmerId, user_id: userId });
+  if (error) { showToast('Fehler: ' + error.message); return; }
+  currentUser.id = userId;
+  showToast('✅ Erfolgreich eingetragen!');
+  ladeZimmer();
+}
+
+function zimmerBearbeiten(zimmerId) {
+  const z = zimmerData.find(r => r.id === zimmerId);
+  if (!z) return;
+  document.getElementById('new-room-num').value   = z.nummer;
+  document.getElementById('new-room-beds').value  = z.betten;
+  document.getElementById('new-room-type').value  = z.typ   || 'Gemischt';
+  document.getElementById('new-room-floor').value = z.etage || 'EG';
+  const modal = document.getElementById('modal-zimmer');
+  modal._editId = zimmerId;
+  modal.classList.add('open');
+}
+
+async function addRoom(){
+  const num   = document.getElementById('new-room-num').value.trim() || '105';
+  const beds  = parseInt(document.getElementById('new-room-beds').value);
+  const typ   = document.getElementById('new-room-type')?.value  || 'Gemischt';
+  const etage = document.getElementById('new-room-floor')?.value || 'EG';
+  const modal = document.getElementById('modal-zimmer');
+  const editId = modal._editId || null;
+  if (editId) {
+    const { error } = await sb.from('zimmer').update({ nummer: num, betten: beds, typ, etage }).eq('id', editId);
+    if (error) { showToast('Fehler: ' + error.message); return; }
+    showToast('Zimmer ' + num + ' wurde aktualisiert!');
+  } else {
+    const { error } = await sb.from('zimmer').insert({ nummer: num, betten: beds, typ, etage });
+    if (error) { showToast('Fehler: ' + error.message); return; }
+    showToast('Zimmer ' + num + ' wurde angelegt!');
+  }
+  modal._editId = null;
+  modal.classList.remove('open');
+  ladeZimmer();
+}
+
 /* ═══════ GRUPPENPLANER ═══════ */
 let gruppenData = [];
 let alleNutzer  = [];
