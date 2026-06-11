@@ -600,7 +600,6 @@ tr:hover td{background:#fafbfc;}
     <div class="nav-item" onclick="showPage('chat',this)">
       <div class="nicon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
       Chat
-      <span class="nbadge">3</span>
     </div>
   </div>
 
@@ -814,68 +813,45 @@ tr:hover td{background:#fafbfc;}
 
     <!-- ── CHAT ── -->
     <div class="page" id="page-chat">
-      <div class="page-title" style="margin-bottom:16px;">Chat</div>
       <div class="chat-layout">
+
+        <!-- Sidebar -->
         <div class="chat-sidebar">
-          <div class="chat-sidebar-title">Gruppen</div>
-          <div class="chat-channel active" onclick="switchChannel(this,'Gruppe Alle','GA','#dbeafe','#1d4ed8','42 Teilnehmer')">
-            <div class="ch-avatar" style="background:#dbeafe;color:#1d4ed8;">GA</div>
-            <div><div class="ch-name">Gruppe Alle</div><div class="ch-preview">Treffpunkt morgen...</div></div>
+          <div class="chat-sidebar-title">Gruppen-Chat</div>
+          <div class="chat-channel active" id="ch-global" onclick="wechsleChat('global', this)">
+            <div class="ch-avatar" style="background:#dbeafe;color:#1d4ed8;">🌐</div>
+            <div style="flex:1;min-width:0;">
+              <div class="ch-name">Alle</div>
+              <div class="ch-preview" id="preview-global">Gruppenweiter Chat</div>
+            </div>
           </div>
-          <div class="chat-channel" onclick="switchChannel(this,'Gruppe Richter','GR','#fee2e2','#991b1b','9 Teilnehmer')">
-            <div class="ch-avatar" style="background:#fee2e2;color:#991b1b;">GR</div>
-            <div><div class="ch-name">Gruppe Richter</div><div class="ch-preview">Helme mitbringen!</div></div>
-          </div>
-          <div class="chat-channel" onclick="switchChannel(this,'Gruppe Müller','GM','#dcfce7','#166534','8 Teilnehmer')">
-            <div class="ch-avatar" style="background:#dcfce7;color:#166534;">GM</div>
-            <div><div class="ch-name">Gruppe Müller</div><div class="ch-preview">Wann treffen wir uns?</div></div>
-          </div>
-          <div class="chat-sidebar-title" style="margin-top:16px;">Direkt</div>
-          <div class="chat-channel" onclick="switchChannel(this,'Herr Richter','HR','#fef9c3','#854d0e','Skilehrer')">
-            <div class="ch-avatar" style="background:#fef9c3;color:#854d0e;">HR</div>
-            <div><div class="ch-name">Herr Richter</div><div class="ch-preview">Danke für die Info!</div></div>
-          </div>
-          <div class="chat-channel" onclick="switchChannel(this,'Frau Müller','FM','#f3e8ff','#6b21a8','Skilehrerin')">
-            <div class="ch-avatar" style="background:#f3e8ff;color:#6b21a8;">FM</div>
-            <div><div class="ch-name">Frau Müller</div><div class="ch-preview">Alles klar!</div></div>
-          </div>
+
+          <div class="chat-sidebar-title" style="margin-top:16px;">Direktnachrichten</div>
+          <div id="dm-liste"></div>
         </div>
+
+        <!-- Hauptbereich -->
         <div class="chat-main">
           <div class="chat-topbar">
-            <div class="ch-avatar" id="chat-av" style="background:#dbeafe;color:#1d4ed8;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;">GA</div>
-            <div><div class="ch-title" id="chat-ch-title">Gruppe Alle</div><div class="ch-count" id="chat-ch-count">42 Teilnehmer</div></div>
+            <div id="chat-header-avatar" class="ch-avatar" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;background:#dbeafe;color:#1d4ed8;">🌐</div>
+            <div>
+              <div class="ch-title" id="chat-ch-title">Alle</div>
+              <div class="ch-count" id="chat-ch-count">Gruppen-Chat</div>
+            </div>
           </div>
           <div class="chat-messages" id="chat-messages">
-            <div class="date-divider">Heute, 09:00</div>
-            <div class="msg-group">
-              <div class="msg-avatar" style="background:#fee2e2;color:#991b1b;">HR</div>
-              <div class="msg-content"><div class="msg-sender">Herr Richter</div><div class="msg-bubble">Guten Morgen alle! Treffpunkt heute um 8:30 Uhr an der Talstation. Bitte pünktlich sein!</div><div class="msg-time">09:02</div></div>
-            </div>
-            <div class="msg-group">
-              <div class="msg-avatar" style="background:#dcfce7;color:#166534;">SL</div>
-              <div class="msg-content"><div class="msg-sender">Sophie L.</div><div class="msg-bubble">Wir sind dabei! Fahren gerade mit dem Bus.</div><div class="msg-time">09:14</div></div>
-            </div>
-            <div class="msg-group own">
-              <div class="msg-avatar" id="own-avatar" style="background:#dbeafe;color:#1d4ed8;">MS</div>
-              <div class="msg-content"><div class="msg-sender" id="own-sender">Du</div><div class="msg-bubble">Super, bis gleich! ⛷️</div><div class="msg-time">09:15</div></div>
-            </div>
-            <div class="msg-group">
-              <div class="msg-avatar" style="background:#f3e8ff;color:#6b21a8;">FM</div>
-              <div class="msg-content"><div class="msg-sender">Frau Müller</div><div class="msg-bubble">Snowboard-Gruppe bitte alle Helme mitbringen! Es gibt eine Kontrolle am Lift.</div><div class="msg-time">09:22</div></div>
-            </div>
-            <div class="msg-group">
-              <div class="msg-avatar" style="background:#fef9c3;color:#854d0e;">TM</div>
-              <div class="msg-content"><div class="msg-sender">Tim M.</div><div class="msg-bubble">Mein Helm liegt noch im Zimmer — komme 5 min später 😅</div><div class="msg-time">09:28</div></div>
-            </div>
+            <div style="text-align:center;color:var(--muted);font-size:13px;padding:20px;">Lade Nachrichten...</div>
           </div>
           <div class="chat-input-row">
-            <input class="chat-input" id="chat-input" type="text" placeholder="Nachricht schreiben..." onkeydown="if(event.key==='Enter')sendMsg()">
-            <button class="btn-send" onclick="sendMsg()"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+            <input class="chat-input" id="chat-input" type="text" placeholder="Nachricht schreiben..." onkeydown="if(event.key==='Enter')sendeNachricht()">
+            <button class="btn-send" onclick="sendeNachricht()">
+              <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
           </div>
         </div>
+
       </div>
     </div>
-
   </div><!-- /main -->
 </div><!-- /app-shell -->
 
@@ -1141,6 +1117,7 @@ function showPage(name,el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
   if(name === 'dashboard') ladeDashboard();
+  if(name === 'chat') ladeChat();
   if(name === 'zimmer') ladeZimmer();
   if(name === 'gruppen') ladeGruppen();
   if(name === 'info') ladeInfobeitraege();
@@ -1804,25 +1781,164 @@ function filterTable(){
 }
 
 /* ═══════ CHAT ═══════ */
-function switchChannel(el,title,av,bg,col,count){
-  document.querySelectorAll('.chat-channel').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('chat-ch-title').textContent=title;
-  document.getElementById('chat-ch-count').textContent=count;
-  const a=document.getElementById('chat-av');
-  a.textContent=av;a.style.background=bg;a.style.color=col;
+let aktiverChat = 'global';   // 'global' oder user_id
+let chatAbo     = null;        // Supabase Realtime Subscription
+let alleNutzerChat = [];       // für DM-Liste
+
+async function ladeChat() {
+  // Alle Nutzer für DM-Sidebar laden
+  const { data: nutzer } = await sb.from('profiles').select('id, full_name, rolle, avatar_url');
+  alleNutzerChat = (nutzer || []).filter(n => n.id !== currentUser?.id);
+
+  // DM-Liste befüllen
+  const dmListe = document.getElementById('dm-liste');
+  dmListe.innerHTML = alleNutzerChat.map(n => {
+    const ini    = (n.full_name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const colors = chatChipFarbe(n.id);
+    const avatar = n.avatar_url
+      ? `<img src="${n.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : ini;
+    return `<div class="chat-channel" id="ch-dm-${n.id}" onclick="wechsleChat('${n.id}', this)">
+      <div class="ch-avatar" style="background:${colors.bg};color:${colors.col};overflow:hidden;">${avatar}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="ch-name">${n.full_name}</div>
+        <div class="ch-preview" id="preview-${n.id}">${n.rolle === 'lehrer' ? '👨‍🏫 Lehrer' : '🎿 Schüler'}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Global-Chat laden
+  wechsleChat('global', document.getElementById('ch-global'));
 }
 
-function sendMsg(){
-  const inp=document.getElementById('chat-input');
-  const text=inp.value.trim();if(!text)return;
-  const msgs=document.getElementById('chat-messages');
-  const now=new Date();
-  const t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  const initials=currentUser?currentUser.initials:'MS';
-  const div=document.createElement('div');div.className='msg-group own';
-  div.innerHTML=`<div class="msg-avatar" style="background:#dbeafe;color:#1d4ed8;">${initials}</div><div class="msg-content"><div class="msg-sender">Du</div><div class="msg-bubble">${text}</div><div class="msg-time">${t}</div></div>`;
-  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;inp.value='';
+function chatChipFarbe(uid) {
+  const palette = [
+    {bg:'#dbeafe',col:'#1d4ed8'},{bg:'#fef9c3',col:'#854d0e'},
+    {bg:'#f3e8ff',col:'#6b21a8'},{bg:'#dcfce7',col:'#166534'},
+    {bg:'#fee2e2',col:'#991b1b'},{bg:'#ffedd5',col:'#9a3412'},
+  ];
+  let hash = 0;
+  for (let c of (uid||'')) hash = (hash * 31 + c.charCodeAt(0)) & 0xffff;
+  return palette[hash % palette.length];
+}
+
+async function wechsleChat(ziel, el) {
+  aktiverChat = ziel;
+
+  // Aktiv-Klasse
+  document.querySelectorAll('.chat-channel').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+
+  // Header aktualisieren
+  const headerAv = document.getElementById('chat-header-avatar');
+  if (ziel === 'global') {
+    document.getElementById('chat-ch-title').textContent = 'Alle';
+    document.getElementById('chat-ch-count').textContent = 'Gruppen-Chat';
+    headerAv.textContent = '🌐';
+    headerAv.style.background = '#dbeafe';
+    headerAv.style.color      = '#1d4ed8';
+  } else {
+    const nutzer = alleNutzerChat.find(n => n.id === ziel);
+    document.getElementById('chat-ch-title').textContent  = nutzer?.full_name || '?';
+    document.getElementById('chat-ch-count').textContent  = 'Direktnachricht';
+    const colors = chatChipFarbe(ziel);
+    if (nutzer?.avatar_url) {
+      headerAv.innerHTML = `<img src="${nutzer.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    } else {
+      const ini = (nutzer?.full_name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      headerAv.textContent  = ini;
+      headerAv.style.background = colors.bg;
+      headerAv.style.color      = colors.col;
+    }
+  }
+
+  // Altes Abo beenden
+  if (chatAbo) { sb.removeChannel(chatAbo); chatAbo = null; }
+
+  // Nachrichten laden
+  await ladeNachrichten();
+
+  // Realtime-Abo
+  chatAbo = sb.channel('chat-' + ziel)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'nachrichten'
+    }, payload => {
+      const msg = payload.new;
+      const istGlobal   = aktiverChat === 'global' && !msg.empfaenger_id;
+      const istPrivat   = aktiverChat !== 'global' &&
+        ((msg.sender_id === currentUser?.id && msg.empfaenger_id === aktiverChat) ||
+         (msg.sender_id === aktiverChat     && msg.empfaenger_id === currentUser?.id));
+      if (istGlobal || istPrivat) ladeNachrichten();
+    })
+    .subscribe();
+}
+
+async function ladeNachrichten() {
+  let query = sb.from('nachrichten').select('*, profiles(full_name, avatar_url)').order('created_at');
+
+  if (aktiverChat === 'global') {
+    query = query.is('empfaenger_id', null);
+  } else {
+    query = query.or(
+      `and(sender_id.eq.${currentUser.id},empfaenger_id.eq.${aktiverChat}),and(sender_id.eq.${aktiverChat},empfaenger_id.eq.${currentUser.id})`
+    );
+  }
+
+  const { data } = await query;
+  renderNachrichten(data || []);
+}
+
+function renderNachrichten(msgs) {
+  const container = document.getElementById('chat-messages');
+  if (msgs.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px;">Noch keine Nachrichten. Schreib etwas! 👋</div>';
+    return;
+  }
+
+  container.innerHTML = msgs.map(m => {
+    const ichBins  = m.sender_id === currentUser?.id;
+    const name     = ichBins ? 'Du' : (m.profiles?.full_name || '?');
+    const ini      = (m.profiles?.full_name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const colors   = chatChipFarbe(m.sender_id);
+    const uhrzeit  = new Date(m.created_at).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+    const avatar   = m.profiles?.avatar_url
+      ? `<img src="${m.profiles.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : ini;
+
+    return `<div class="msg-group ${ichBins ? 'own' : ''}">
+      <div class="msg-avatar" style="background:${colors.bg};color:${colors.col};overflow:hidden;">${avatar}</div>
+      <div class="msg-content">
+        <div class="msg-sender">${name}</div>
+        <div class="msg-bubble">${m.inhalt}</div>
+        <div class="msg-time">${uhrzeit}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.scrollTop = container.scrollHeight;
+}
+
+async function sendeNachricht() {
+  const inp  = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (!text) return;
+
+  const { data: { session } } = await sb.auth.getSession();
+  const uid = session?.user?.id;
+  if (!uid) return;
+
+  const msg = {
+    inhalt:    text,
+    sender_id: uid,
+    empfaenger_id: aktiverChat === 'global' ? null : aktiverChat
+  };
+
+  const { error } = await sb.from('nachrichten').insert(msg);
+  if (error) { showToast('Fehler: ' + error.message); return; }
+  inp.value = '';
+  ladeNachrichten();
 }
 
 /* ═══════ TOAST ═══════ */
