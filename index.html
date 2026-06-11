@@ -669,7 +669,9 @@ tr:hover td{background:#fafbfc;}
         </div>
         <div class="fgroup">
           <label class="flabel">Skilehrer</label>
-          <input class="finput" id="g-lehrer" placeholder="z.B. Herr Richter">
+          <select class="form-select finput" id="g-lehrer" style="height:44px;">
+            <option value="">Lehrer auswählen...</option>
+          </select>
         </div>
         <div class="fgroup">
           <label class="flabel">Schwierigkeitsgrad</label>
@@ -1456,6 +1458,14 @@ async function ladeGruppen() {
   // Gruppen + Mitglieder laden
   const { data: gruppen } = await sb.from('gruppen').select('*, gruppen_mitglieder(user_id)');
   gruppenData = gruppen || [];
+
+  // Lehrer-Dropdown befüllen
+  const lehrerSelect = document.getElementById('g-lehrer');
+  if (lehrerSelect) {
+    const lehrer = alleNutzer.filter(n => n.rolle === 'lehrer');
+    lehrerSelect.innerHTML = '<option value="">Lehrer auswählen...</option>' +
+      lehrer.map(l => `<option value="${l.full_name}">${l.full_name}</option>`).join('');
+  }
 
   renderGruppen();
 }
