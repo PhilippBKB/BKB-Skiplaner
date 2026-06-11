@@ -1449,7 +1449,7 @@ async function ladeGruppen() {
   if (btn) btn.style.display = istLehrer ? 'flex' : 'none';
 
   // Alle Nutzer laden
-  const { data: nutzer } = await sb.from('profiles').select('id, full_name, klasse, sportart, level, avatar_url');
+  const { data: nutzer } = await sb.from('profiles').select('id, full_name, rolle, klasse, sportart, level, avatar_url');
   alleNutzer = nutzer || [];
 
   // Gruppen + Mitglieder laden
@@ -1484,7 +1484,7 @@ function renderGruppen() {
       <div class="chip-avatar" style="background:${colors.bg};color:${colors.col};overflow:hidden;">${avatarHTML}</div>
       <div>
         <div class="chip-name">${n.full_name||'Unbekannt'}${ichBins?' (Du)':''}</div>
-        <div class="chip-sub">${n.klasse||''} · ${n.sportart||''} · ${n.level||''}</div>
+        <div class="chip-sub">${n.rolle === 'lehrer' ? '👨‍🏫 Lehrer' : '🎿 Schüler'}${n.sportart ? ' · ' + n.sportart : ''}${n.level ? ' · ' + n.level : ''}</div>
       </div>
     </div>`;
   }).join('');
@@ -1504,7 +1504,7 @@ function renderGruppen() {
         : ini;
       return `<div class="assigned-chip" data-uid="${m.id}">
         <div class="chip-avatar" style="background:${colors.bg};color:${colors.col};width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">${mAvatar}</div>
-        <div style="flex:1;"><div class="chip-name" style="font-size:12px;">${m.full_name}${ichBins?' (Du)':''}</div><div class="chip-sub">${m.sportart||''} · ${m.level||''}</div></div>
+        <div style="flex:1;"><div class="chip-name" style="font-size:12px;">${m.full_name}${ichBins?' (Du)':''}</div><div class="chip-sub">${m.rolle === 'lehrer' ? '👨‍🏫 Lehrer' : '🎿 Schüler'}${m.sportart ? ' · ' + m.sportart : ''}${m.level ? ' · ' + m.level : ''}</div></div>
         ${istLehrer || ichBins ? `<button class="remove-btn" onclick="gruppeVerlassen(${g.id},'${m.id}')">×</button>` : ''}
       </div>`;
     }).join('');
