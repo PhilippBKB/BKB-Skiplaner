@@ -1023,7 +1023,8 @@ function doLogin(){
         name,
         initials:(parts[0][0]+(parts[1]?parts[1][0]:'')).toUpperCase(),
         email:data.user.email,
-        rolle:profile?.rolle||'schueler'
+        rolle:profile?.rolle||'schueler',
+        avatarUrl:profile?.avatar_url||null
       };
       enterApp();
     });
