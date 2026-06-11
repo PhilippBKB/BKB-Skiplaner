@@ -1910,20 +1910,29 @@ async function ladeNachrichten() {
   renderNachrichten(combined);
 }
 
+let _renderLock = false;
 function renderNachrichten(msgs) {
+  if (_renderLock) return;
+  _renderLock = true;
+
   const container = document.getElementById('chat-messages');
+  const input     = document.getElementById('chat-input');
+  const hatFokus  = document.activeElement === input;
+  const savedVal  = input ? input.value : '';
+
   if (msgs.length === 0) {
     container.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px;">Noch keine Nachrichten. Schreib etwas! 👋</div>';
+    _renderLock = false;
     return;
   }
 
   container.innerHTML = msgs.map(m => {
-    const ichBins  = m.sender_id === currentUser?.id;
-    const name     = ichBins ? 'Du' : (m.profiles?.full_name || '?');
-    const ini      = (m.profiles?.full_name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    const colors   = chatChipFarbe(m.sender_id);
-    const uhrzeit  = new Date(m.created_at).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
-    const avatar   = m.profiles?.avatar_url
+    const ichBins = m.sender_id === currentUser?.id;
+    const name    = ichBins ? 'Du' : (m.profiles?.full_name || '?');
+    const ini     = (m.profiles?.full_name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const colors  = chatChipFarbe(m.sender_id);
+    const uhrzeit = new Date(m.created_at).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+    const avatar  = m.profiles?.avatar_url
       ? `<img src="${m.profiles.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
       : ini;
 
@@ -1938,6 +1947,14 @@ function renderNachrichten(msgs) {
   }).join('');
 
   container.scrollTop = container.scrollHeight;
+
+  // Input-Zustand wiederherstellen
+  if (input) {
+    input.value = savedVal;
+    if (hatFokus) input.focus();
+  }
+
+  _renderLock = false;
 }
 
 async function sendeNachricht() {
