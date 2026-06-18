@@ -793,21 +793,20 @@ tr:hover td{background:#fafbfc;}
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             E-Mail Whitelist
           </button>
-          <button class="btn btn-primary" onclick="schuelerHinzufuegenModal()">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Schüler hinzufügen
-          </button>
         </div>
       </div>
       <div class="page-sub" id="anmelde-sub">Wird geladen...</div>
 
-      <!-- Registrierte Schüler -->
-      <div class="card" style="padding:0;overflow:hidden;">
+      <!-- Bereits registriert -->
+      <div style="font-size:13px;font-weight:600;color:#475569;margin-bottom:8px;margin-top:4px;">✅ Bereits registriert</div>
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:20px;">
         <div class="table-wrap">
           <table id="anmelde-table">
             <thead>
               <tr>
-                <th>Schüler</th>
+                <th>Person</th>
                 <th>E-Mail</th>
+                <th>Rolle</th>
                 <th>Klasse</th>
                 <th>Sportart</th>
                 <th>Level</th>
@@ -817,9 +816,17 @@ tr:hover td{background:#fafbfc;}
               </tr>
             </thead>
             <tbody id="anmelde-tbody">
-              <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:30px;">Wird geladen...</td></tr>
+              <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px;">Wird geladen...</td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Noch nicht registriert (Whitelist ausstehend) -->
+      <div style="font-size:13px;font-weight:600;color:#475569;margin-bottom:8px;">⏳ Noch nicht registriert</div>
+      <div class="card" style="padding:16px;" id="ausstehend-card">
+        <div id="ausstehend-liste" style="display:flex;flex-direction:column;gap:8px;">
+          <div style="color:var(--muted);font-size:13px;">Wird geladen...</div>
         </div>
       </div>
     </div>
@@ -1869,16 +1876,17 @@ async function ladeAnmeldeliste() {
     { data: zimmer },
     { data: belegungen },
     { data: gruppen },
-    { data: mitglieder }
+    { data: mitglieder },
+    { data: whitelist }
   ] = await Promise.all([
     sb.from('profiles').select('id, full_name, email, klasse, sportart, level, avatar_url, rolle'),
     sb.from('zimmer').select('id, nummer'),
     sb.from('zimmer_belegung').select('user_id, zimmer_id'),
     sb.from('gruppen').select('id, name'),
-    sb.from('gruppen_mitglieder').select('user_id, gruppe_id')
+    sb.from('gruppen_mitglieder').select('user_id, gruppe_id'),
+    sb.from('email_whitelist').select('id, email, created_at').order('created_at', {ascending: false})
   ]);
 
-  const schueler = (profiles||[]).filter(p => p.rolle !== 'lehrer');
   const zimmerMap = {};
   (zimmer||[]).forEach(z => zimmerMap[z.id] = z.nummer);
   const belegMap = {};
@@ -1888,20 +1896,29 @@ async function ladeAnmeldeliste() {
   const mitgliedMap = {};
   (mitglieder||[]).forEach(m => mitgliedMap[m.user_id] = gruppenMap[m.gruppe_id]);
 
-  anmeldeData = schueler.map(s => ({
+  // Alle registrierten Nutzer (Schüler + Lehrer)
+  anmeldeData = (profiles||[]).map(s => ({
     ...s,
     zimmer: belegMap[s.id]    || null,
     gruppe: mitgliedMap[s.id] || null
   }));
 
-  document.getElementById('anmelde-sub').textContent = anmeldeData.length + ' angemeldete Schüler';
+  // Ausstehende: Whitelist E-Mails die noch nicht registriert sind
+  const registriertEmails = new Set((profiles||[]).map(p => (p.email||'').toLowerCase()));
+  const ausstehend = (whitelist||[]).filter(w => !registriertEmails.has(w.email.toLowerCase()));
+
+  const schuelerAnzahl = anmeldeData.filter(p => p.rolle !== 'lehrer').length;
+  document.getElementById('anmelde-sub').textContent =
+    schuelerAnzahl + ' Schüler · ' + anmeldeData.filter(p => p.rolle === 'lehrer').length + ' Lehrer registriert · ' + ausstehend.length + ' ausstehend';
+
   renderAnmeldeliste(anmeldeData);
+  renderAusstehend(ausstehend);
 }
 
 function renderAnmeldeliste(data) {
   const tbody = document.getElementById('anmelde-tbody');
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:30px;">Keine Schüler gefunden.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px;">Keine Einträge gefunden.</td></tr>';
     return;
   }
   tbody.innerHTML = data.map(s => {
@@ -1911,9 +1928,13 @@ function renderAnmeldeliste(data) {
       ? `<img src="${s.avatar_url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`
       : `<div style="width:32px;height:32px;border-radius:50%;background:${colors.bg};color:${colors.col};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${ini}</div>`;
     const niveauTag = s.level === 'Profi' ? 'tag-red' : s.level === 'Fortgeschritten' ? 'tag-amber' : 'tag-green';
+    const rolleTag  = s.rolle === 'lehrer'
+      ? '<span class="pill tag-blue">👨‍🏫 Lehrer</span>'
+      : '<span class="pill tag-green">🎿 Schüler</span>';
     return `<tr>
       <td><div class="td-person">${avatar}<span style="font-weight:500;">${s.full_name||'–'}</span></div></td>
       <td style="color:var(--muted);font-size:13px;">${s.email||'–'}</td>
+      <td>${rolleTag}</td>
       <td>${s.klasse||'–'}</td>
       <td>${s.sportart||'–'}</td>
       <td>${s.level ? `<span class="pill ${niveauTag}">${s.level}</span>` : '–'}</td>
@@ -1922,6 +1943,33 @@ function renderAnmeldeliste(data) {
       <td><button onclick="schuelerEntfernen('${s.id}','${(s.full_name||'').replace(/'/g, "\'")}')" style="background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">Entfernen</button></td>
     </tr>`;
   }).join('');
+}
+
+function renderAusstehend(data) {
+  const liste = document.getElementById('ausstehend-liste');
+  if (!data.length) {
+    liste.innerHTML = '<div style="color:#10b981;font-size:13px;font-weight:500;">Alle freigegebenen E-Mails haben sich bereits registriert! 🎉</div>';
+    return;
+  }
+  liste.innerHTML = data.map(e => {
+    const datum = new Date(e.created_at).toLocaleDateString('de-DE', {day:'2-digit', month:'short', year:'numeric'});
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fefce8;border-radius:10px;border:1px solid #fde68a;">
+      <div style="width:32px;height:32px;border-radius:50%;background:#fef9c3;color:#854d0e;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">?</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;color:#1e293b;font-weight:500;">${e.email}</div>
+        <div style="font-size:11px;color:#94a3b8;">Freigegeben am ${datum}</div>
+      </div>
+      <span style="font-size:11px;background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:6px;font-weight:600;white-space:nowrap;">⏳ Ausstehend</span>
+      <button onclick="emailVonListeEntfernen(${e.id},'${e.email}')" style="background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;">Entfernen</button>
+    </div>`;
+  }).join('');
+}
+
+async function emailVonListeEntfernen(id, email) {
+  if (!confirm(email + ' von der Whitelist entfernen?')) return;
+  await sb.from('email_whitelist').delete().eq('id', id);
+  showToast(email + ' entfernt.');
+  ladeAnmeldeliste();
 }
 
 function filterAnmeldung() {
