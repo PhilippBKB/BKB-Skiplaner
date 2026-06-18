@@ -1052,7 +1052,7 @@ let currentUser = null;
   if (!session?.user) return;
 
   const { data: profile } = await sb.from('profiles')
-    .select('full_name, rolle, avatar_url, klasse, sportart, level')
+    .select('full_name, rolle, avatar_url, klasse, sportart, level, email')
     .eq('id', session.user.id).single();
 
   const name  = profile?.full_name || session.user.email;
@@ -1061,7 +1061,7 @@ let currentUser = null;
     id:        session.user.id,
     name,
     initials:  (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase(),
-    email:     session.user.email,
+    email:     profile?.email || session.user.email,
     rolle:     profile?.rolle      || 'schueler',
     avatarUrl: profile?.avatar_url || null,
   };
@@ -1168,10 +1168,11 @@ async function enterApp(){
     const { data: { session } } = await sb.auth.getSession();
     if(session?.user?.id){
       currentUser.id = session.user.id;
-      const { data: profile } = await sb.from('profiles').select('rolle, avatar_url').eq('id', session.user.id).single();
+      const { data: profile } = await sb.from('profiles').select('rolle, avatar_url, email').eq('id', session.user.id).single();
       if(profile){
         currentUser.rolle     = profile.rolle;
         currentUser.avatarUrl = profile.avatar_url || null;
+        currentUser.email     = profile.email || currentUser.email;
       }
     }
   }
@@ -2103,7 +2104,7 @@ let alleNutzerChat = [];       // für DM-Liste
 
 async function ladeChat() {
   // Alle Nutzer für DM-Sidebar laden
-  const { data: nutzer } = await sb.from('profiles').select('id, full_name, rolle, avatar_url');
+  const { data: nutzer } = await sb.from('profiles').select('id, full_name, rolle, avatar_url, email');
   alleNutzerChat = (nutzer || []).filter(n => n.id !== currentUser?.id);
 
   // DM-Liste befüllen
