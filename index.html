@@ -787,30 +787,106 @@ tr:hover td{background:#fafbfc;}
     <div class="page" id="page-anmeldung">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <div class="page-title">Anmeldeliste</div>
-        <div style="display:flex;gap:10px;">
-          <input type="text" id="search-input" placeholder="Suchen..." oninput="filterTable()" style="height:38px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;background:white;outline:none;width:190px;">
-          <button class="btn btn-primary" onclick="showToast('Export wird vorbereitet...')"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Exportieren</button>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="text" id="anmelde-search" placeholder="Name suchen..." oninput="filterAnmeldung()" style="height:38px;border:1.5px solid var(--border);border-radius:10px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;background:white;outline:none;width:190px;">
+          <button class="btn" onclick="zeigeWhitelist()" style="gap:6px;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            E-Mail Whitelist
+          </button>
+          <button class="btn btn-primary" onclick="schuelerHinzufuegenModal()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Schüler hinzufügen
+          </button>
         </div>
       </div>
-      <div class="page-sub">42 angemeldete Schüler · Stand: 24.01.2025</div>
+      <div class="page-sub" id="anmelde-sub">Wird geladen...</div>
+
+      <!-- Registrierte Schüler -->
       <div class="card" style="padding:0;overflow:hidden;">
         <div class="table-wrap">
-          <table id="student-table">
-            <thead><tr><th>Name</th><th>Klasse</th><th>Sportart</th><th>Level</th><th>Gruppe</th><th>Zimmer</th><th>Status</th></tr></thead>
-            <tbody>
-              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#dcfce7;color:#166534;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">SL</div>Sophie L.</div></td><td>10A</td><td>Ski</td><td><span class="pill tag-green">Anfänger</span></td><td>Gruppe Richter</td><td>101</td><td><span class="pill tag-green">Angemeldet</span></td></tr>
-              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#dbeafe;color:#1d4ed8;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">TM</div>Tim M.</div></td><td>10B</td><td>Ski</td><td><span class="pill tag-amber">Fortgeschritten</span></td><td>Gruppe Richter</td><td>102</td><td><span class="pill tag-green">Angemeldet</span></td></tr>
-              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#fef9c3;color:#854d0e;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">AK</div>Anna K.</div></td><td>10B</td><td>Snowboard</td><td><span class="pill tag-green">Anfänger</span></td><td>—</td><td>101</td><td><span class="pill tag-amber">Ausstehend</span></td></tr>
-              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#f3e8ff;color:#6b21a8;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">JK</div>Jonas K.</div></td><td>11A</td><td>Snowboard</td><td><span class="pill tag-purple">Profi</span></td><td>Gruppe Müller</td><td>104</td><td><span class="pill tag-green">Angemeldet</span></td></tr>
-              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#ffe4e6;color:#9f1239;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">MH</div>Max H.</div></td><td>10B</td><td>Ski</td><td><span class="pill tag-amber">Fortgeschritten</span></td><td>Gruppe Richter</td><td>102</td><td><span class="pill tag-green">Angemeldet</span></td></tr>
-              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#ecfdf5;color:#065f46;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">LB</div>Lena B.</div></td><td>11C</td><td>Ski</td><td><span class="pill tag-green">Anfänger</span></td><td>—</td><td>101</td><td><span class="pill tag-amber">Ausstehend</span></td></tr>
-              <tr><td><div class="td-person"><div class="chip-avatar" style="background:#e0e7ff;color:#3730a3;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">LP</div>Lukas P.</div></td><td>11B</td><td>Ski</td><td><span class="pill tag-purple">Profi</span></td><td>Gruppe Müller</td><td>104</td><td><span class="pill tag-green">Angemeldet</span></td></tr>
+          <table id="anmelde-table">
+            <thead>
+              <tr>
+                <th>Schüler</th>
+                <th>E-Mail</th>
+                <th>Klasse</th>
+                <th>Sportart</th>
+                <th>Level</th>
+                <th>Zimmer</th>
+                <th>Gruppe</th>
+                <th>Aktion</th>
+              </tr>
+            </thead>
+            <tbody id="anmelde-tbody">
+              <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:30px;">Wird geladen...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
 
+    <!-- ── MODAL WHITELIST ── -->
+    <div class="modal-overlay" id="modal-whitelist">
+      <div class="modal-box" style="max-width:520px;">
+        <div class="modal-title">E-Mail Whitelist</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:16px;">Nur freigegebene E-Mail-Adressen können sich registrieren.</div>
+
+        <!-- Neue E-Mail hinzufügen -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <input class="finput" id="whitelist-email" placeholder="neue@email.de" type="email" style="flex:1;" onkeydown="if(event.key==='Enter')emailFreigeben()">
+          <button class="btn btn-primary" onclick="emailFreigeben()" style="flex-shrink:0;">Freigeben</button>
+        </div>
+
+        <!-- Liste der freigegebenen E-Mails -->
+        <div id="whitelist-liste" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;">
+          <div style="text-align:center;color:var(--muted);font-size:13px;padding:20px;">Wird geladen...</div>
+        </div>
+
+        <button class="btn" style="width:100%;margin-top:16px;justify-content:center;" onclick="document.getElementById('modal-whitelist').classList.remove('open')">Schließen</button>
+      </div>
+    </div>
+
+    <!-- ── MODAL SCHÜLER HINZUFÜGEN ── -->
+    <div class="modal-overlay" id="modal-schueler">
+      <div class="modal-box">
+        <div class="modal-title">Schüler manuell hinzufügen</div>
+        <div class="fgroup">
+          <label class="flabel">Vorname</label>
+          <input class="finput" id="neu-vn" placeholder="z.B. Max">
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Nachname</label>
+          <input class="finput" id="neu-nn" placeholder="z.B. Mustermann">
+        </div>
+        <div class="fgroup">
+          <label class="flabel">E-Mail</label>
+          <input class="finput" type="email" id="neu-email" placeholder="z.B. max@schule.de">
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Klasse</label>
+          <input class="finput" id="neu-klasse" placeholder="z.B. 10A">
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Sportart</label>
+          <select class="form-select finput" id="neu-sport" style="height:44px;">
+            <option value="Ski">Ski</option>
+            <option value="Snowboard">Snowboard</option>
+          </select>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Level</label>
+          <select class="form-select finput" id="neu-level" style="height:44px;">
+            <option value="Anfänger">Anfänger</option>
+            <option value="Fortgeschritten">Fortgeschritten</option>
+            <option value="Profi">Profi</option>
+          </select>
+        </div>
+        <div id="schueler-modal-status" style="font-size:12px;color:#64748b;min-height:16px;text-align:center;"></div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="btn" style="flex:1;" onclick="document.getElementById('modal-schueler').classList.remove('open')">Abbrechen</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="schuelerHinzufuegen()">Hinzufügen</button>
+        </div>
+      </div>
+    </div>
     <!-- ── CHAT ── -->
     <div class="page" id="page-chat">
       <div class="chat-layout">
@@ -1053,6 +1129,14 @@ async function doRegister(){
   const btn=document.querySelector('#view-register .btn-submit');
   btn.textContent='Wird registriert…';btn.disabled=true;
 
+  // Whitelist prüfen
+  const { data: wl } = await sb.from('email_whitelist').select('id').eq('email', email.toLowerCase()).maybeSingle();
+  if (!wl) {
+    btn.textContent='Registrieren';btn.disabled=false;
+    showToast('❌ Diese E-Mail ist nicht freigegeben. Bitte wende dich an deinen Lehrer.');
+    return;
+  }
+
   const {data,error}=await sb.auth.signUp({
     email,password:pw,
     options:{data:{full_name:fullName,klasse,sportart:sport.value,level:level.value,rolle:'schueler'}}
@@ -1121,6 +1205,7 @@ function showPage(name,el){
   if(name === 'zimmer') ladeZimmer();
   if(name === 'gruppen') ladeGruppen();
   if(name === 'info') ladeInfobeitraege();
+  if(name === 'anmeldung') ladeAnmeldeliste();
 }
 
 function doLogout(){
@@ -1775,9 +1860,163 @@ async function addRoom(){
 }
 
 /* ═══════ SUCHE ═══════ */
-function filterTable(){
-  const q=document.getElementById('search-input').value.toLowerCase();
-  document.querySelectorAll('#student-table tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});
+/* ═══════ ANMELDELISTE ═══════ */
+let anmeldeData = [];
+
+async function ladeAnmeldeliste() {
+  const [
+    { data: profiles },
+    { data: zimmer },
+    { data: belegungen },
+    { data: gruppen },
+    { data: mitglieder }
+  ] = await Promise.all([
+    sb.from('profiles').select('id, full_name, email, klasse, sportart, level, avatar_url, rolle'),
+    sb.from('zimmer').select('id, nummer'),
+    sb.from('zimmer_belegung').select('user_id, zimmer_id'),
+    sb.from('gruppen').select('id, name'),
+    sb.from('gruppen_mitglieder').select('user_id, gruppe_id')
+  ]);
+
+  const schueler = (profiles||[]).filter(p => p.rolle !== 'lehrer');
+  const zimmerMap = {};
+  (zimmer||[]).forEach(z => zimmerMap[z.id] = z.nummer);
+  const belegMap = {};
+  (belegungen||[]).forEach(b => belegMap[b.user_id] = zimmerMap[b.zimmer_id]);
+  const gruppenMap = {};
+  (gruppen||[]).forEach(g => gruppenMap[g.id] = g.name);
+  const mitgliedMap = {};
+  (mitglieder||[]).forEach(m => mitgliedMap[m.user_id] = gruppenMap[m.gruppe_id]);
+
+  anmeldeData = schueler.map(s => ({
+    ...s,
+    zimmer: belegMap[s.id]    || null,
+    gruppe: mitgliedMap[s.id] || null
+  }));
+
+  document.getElementById('anmelde-sub').textContent = anmeldeData.length + ' angemeldete Schüler';
+  renderAnmeldeliste(anmeldeData);
+}
+
+function renderAnmeldeliste(data) {
+  const tbody = document.getElementById('anmelde-tbody');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:30px;">Keine Schüler gefunden.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(s => {
+    const ini    = (s.full_name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const colors = chipFarbe(s.id);
+    const avatar = s.avatar_url
+      ? `<img src="${s.avatar_url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`
+      : `<div style="width:32px;height:32px;border-radius:50%;background:${colors.bg};color:${colors.col};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${ini}</div>`;
+    const niveauTag = s.level === 'Profi' ? 'tag-red' : s.level === 'Fortgeschritten' ? 'tag-amber' : 'tag-green';
+    return `<tr>
+      <td><div class="td-person">${avatar}<span style="font-weight:500;">${s.full_name||'–'}</span></div></td>
+      <td style="color:var(--muted);font-size:13px;">${s.email||'–'}</td>
+      <td>${s.klasse||'–'}</td>
+      <td>${s.sportart||'–'}</td>
+      <td>${s.level ? `<span class="pill ${niveauTag}">${s.level}</span>` : '–'}</td>
+      <td>${s.zimmer ? `<span class="pill tag-blue">Zimmer ${s.zimmer}</span>` : '<span style="color:var(--muted);font-size:12px;">–</span>'}</td>
+      <td>${s.gruppe ? `<span class="pill tag-green">${s.gruppe}</span>` : '<span style="color:var(--muted);font-size:12px;">–</span>'}</td>
+      <td><button onclick="schuelerEntfernen('${s.id}','${(s.full_name||'').replace(/'/g, "\'")}')" style="background:none;border:1px solid #fca5a5;color:#ef4444;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">Entfernen</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterAnmeldung() {
+  const q = document.getElementById('anmelde-search').value.toLowerCase();
+  renderAnmeldeliste(anmeldeData.filter(s =>
+    (s.full_name||'').toLowerCase().includes(q) ||
+    (s.email||'').toLowerCase().includes(q) ||
+    (s.klasse||'').toLowerCase().includes(q)
+  ));
+}
+
+function schuelerHinzufuegenModal() {
+  document.getElementById('modal-schueler').classList.add('open');
+}
+
+async function schuelerHinzufuegen() {
+  const vn    = document.getElementById('neu-vn').value.trim();
+  const nn    = document.getElementById('neu-nn').value.trim();
+  const email = document.getElementById('neu-email').value.trim();
+  const klasse= document.getElementById('neu-klasse').value.trim();
+  const sport = document.getElementById('neu-sport').value;
+  const level = document.getElementById('neu-level').value;
+  const status= document.getElementById('schueler-modal-status');
+  if (!vn || !nn || !email) { showToast('Bitte Name und E-Mail ausfüllen.'); return; }
+  status.textContent = '⏳ Wird hinzugefügt...';
+  const { error } = await sb.from('profiles').insert({
+    full_name: vn + ' ' + nn, klasse, sportart: sport, level, rolle: 'schueler'
+  });
+  if (error) { status.textContent = '❌ ' + error.message; return; }
+  status.textContent = '';
+  document.getElementById('modal-schueler').classList.remove('open');
+  showToast('✅ ' + vn + ' ' + nn + ' wurde hinzugefügt!');
+  ['neu-vn','neu-nn','neu-email','neu-klasse'].forEach(id => document.getElementById(id).value = '');
+  ladeAnmeldeliste();
+}
+
+async function schuelerEntfernen(userId, name) {
+  if (!confirm(name + ' wirklich entfernen? Das löscht auch alle Zimmer- und Gruppenzuweisungen.')) return;
+  await Promise.all([
+    sb.from('zimmer_belegung').delete().eq('user_id', userId),
+    sb.from('gruppen_mitglieder').delete().eq('user_id', userId),
+    sb.from('profiles').delete().eq('id', userId)
+  ]);
+  showToast(name + ' wurde entfernt.');
+  ladeAnmeldeliste();
+}
+
+/* ═══════ WHITELIST ═══════ */
+async function zeigeWhitelist() {
+  document.getElementById('modal-whitelist').classList.add('open');
+  ladeWhitelist();
+}
+
+async function ladeWhitelist() {
+  const { data } = await sb.from('email_whitelist').select('id, email, created_at').order('created_at', {ascending: false});
+  const liste = document.getElementById('whitelist-liste');
+
+  if (!data || data.length === 0) {
+    liste.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px;">Noch keine E-Mails freigegeben.</div>';
+    return;
+  }
+
+  liste.innerHTML = data.map(e => {
+    const datum = new Date(e.created_at).toLocaleDateString('de-DE', {day:'2-digit', month:'short', year:'numeric'});
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+      <div style="flex:1;font-size:13px;color:#1e293b;">${e.email}</div>
+      <div style="font-size:11px;color:#94a3b8;">${datum}</div>
+      <button onclick="emailEntfernen(${e.id},'${e.email}')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:16px;line-height:1;padding:0 4px;">×</button>
+    </div>`;
+  }).join('');
+}
+
+async function emailFreigeben() {
+  const input = document.getElementById('whitelist-email');
+  const email = input.value.trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('Bitte eine gültige E-Mail eingeben.'); return;
+  }
+  const { error } = await sb.from('email_whitelist').insert({ email, hinzugefuegt_von: currentUser.id });
+  if (error) {
+    if (error.code === '23505') showToast('Diese E-Mail ist bereits freigegeben.');
+    else showToast('Fehler: ' + error.message);
+    return;
+  }
+  input.value = '';
+  showToast('✅ ' + email + ' freigegeben!');
+  ladeWhitelist();
+}
+
+async function emailEntfernen(id, email) {
+  if (!confirm(email + ' von der Whitelist entfernen?')) return;
+  await sb.from('email_whitelist').delete().eq('id', id);
+  showToast(email + ' entfernt.');
+  ladeWhitelist();
 }
 
 /* ═══════ CHAT ═══════ */
